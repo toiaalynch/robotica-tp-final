@@ -28,7 +28,6 @@ proyecto, actualizá este archivo:
 
 | Parte | Estado | Detalle |
 |---|---|---|
-| **0** — Control básico | ⬜ Pendiente | Nodo reactivo (avanzar/rotar). Lo arma el grupo aparte. |
 | **A** — SLAM | 🟩 Implementada y verificada (falta probar en Gazebo real) | Paquete `slam_gridmap`: Grid-Based FastSLAM (Opción 1). |
 | **B** — Navegación | ⬜ Pendiente | — |
 | **C** — Hardware real | ⬜ Pendiente | Se usa TurtleBot4 real. |

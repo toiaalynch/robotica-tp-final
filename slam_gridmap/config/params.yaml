@@ -1,0 +1,61 @@
+# ===========================================================================
+# Parametros del nodo Grid-Based FastSLAM (Parte A, Opcion 1).
+# Se cargan con: ros2 launch slam_gridmap slam_gridmap.launch.py
+# Ajustalos segun tu PC (mas particulas = mejor mapa pero mas lento).
+# ===========================================================================
+grid_fastslam:
+  ros__parameters:
+    use_sim_time: true              # OBLIGATORIO con Gazebo (usa el reloj de la sim)
+
+    # --- Robot (portabilidad TB3 simulado / TB4 real) ---
+    # Con este UNICO parametro se ajustan topicos, QoS y particularidades del
+    # LIDAR. tb3 -> Gazebo (Parte A) ; tb4 -> robot real (Parte C).
+    robot_type: "tb3"               # "tb3" o "tb4"
+
+    # --- Filtro de particulas ---
+    num_particles: 30               # 20-30 para tiempo real; subir si tu PC aguanta
+    alpha: [0.02, 0.02, 0.02, 0.02] # ruido del modelo de odometria (a1..a4)
+    neff_ratio: 0.5                 # resamplea si N_eff < 0.5 * N
+    seed: 1                         # reproducibilidad
+
+    # --- Likelihood field (correccion / peso de cada particula) ---
+    sigma_hit: 0.20                 # incertidumbre del LIDAR [m]
+    z_hit: 0.85                     # peso del termino gaussiano
+    z_rand: 0.15                    # piso de probabilidad (robustez)
+
+    # --- Mapa de ocupacion ---
+    map_width_m: 16.0               # tamano del mapa [m]
+    map_height_m: 16.0
+    map_resolution: 0.05            # 5 cm por celda
+    map_origin_x: -8.0              # esquina inferior-izquierda del mapa [m]
+    map_origin_y: -8.0
+    p_occ: 0.70                     # modelo inverso: prob. de ocupado
+    p_free: 0.35                    # modelo inverso: prob. de libre
+    occ_threshold: 0.65            # prob. desde la cual una celda es "pared"
+
+    # --- LIDAR y keyframes (clave para correr en tiempo real) ---
+    scan_subsample: 4               # usar 1 de cada 4 rayos
+    max_range: 0.0                  # 0 -> usa el range_max del propio LaserScan
+    keyframe_dist: 0.10             # correr un paso de SLAM cada 10 cm...
+    keyframe_angle: 0.10            # ...o cada ~6 grados de giro
+    sensor_offset_x: 0.0            # offset del LIDAR respecto del centro del robot
+    sensor_offset_y: 0.0
+
+    # --- Frames ---
+    map_frame: "map"
+    odom_frame: "odom"
+
+    # --- Topicos / QoS / fisica del LIDAR ---
+    # OJO: estos los define automaticamente 'robot_type'. Solo descomenta y
+    # cambia si necesitas forzar un valor distinto al del perfil.
+    # scan_topic: "/scan"            # tb3: /scan      | tb4: /tb4_0/scan
+    # odom_topic: "/calc_odom"       # tb3: /calc_odom | tb4: /odom
+    # gt_odom_topic: "/odom"         # tb3: /odom      | tb4: "" (sin ground truth)
+    # odom_qos: "reliable"           # tb3: reliable   | tb4: best_effort
+    # lidar_angle_offset: 0.0        # tb4: rotacion del LIDAR [rad] (medir)
+    # discard_zero_intensity: false  # tb4: true (descarta intensidad 0)
+
+    # --- Salidas ---
+    publish_likelihoodfield: true   # publica /likelihoodfield (debug)
+    map_save_path: ""               # vacio -> ~/maps/mapa_slam (.pgm + .yaml)
+    save_png: true                  # ademas guarda un PNG presentable (.png) para el informe

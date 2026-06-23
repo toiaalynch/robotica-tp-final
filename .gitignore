@@ -1,0 +1,23 @@
+# --- ROS 2 / colcon build artifacts ---
+build/
+install/
+log/
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# --- Mapas generados por el SLAM (se regeneran corriendo el nodo) ---
+*.pgm
+mapa_slam.*
+maps/
+
+# --- macOS ---
+.DS_Store
+*.webloc
+
+# --- Editores ---
+.vscode/
+.idea/

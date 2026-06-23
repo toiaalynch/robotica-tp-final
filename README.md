@@ -27,11 +27,21 @@ tres etapas evolutivas.
 ## Estructura del repositorio
 
 ```
-robotica-tp-final/
-├── README.md           <- este archivo
-├── HISTORIAL.md        <- bitácora de cambios del grupo
-├── consignas/          <- enunciados (PDF) + diagrama de flujo
-└── slam_gridmap/       <- paquete ROS 2 de la Parte A (SLAM)
+robotica-tp-final/         <- cloná esto y usalo como workspace de colcon
+├── README.md              <- este archivo
+├── HISTORIAL.md           <- bitácora de cambios del grupo
+├── consignas/             <- enunciados (PDF) + diagrama de flujo
+└── src/                   <- paquetes ROS 2
+    └── slam_gridmap/      <- Parte A (SLAM)  · (B y C se sumarán acá)
+```
+
+Al estar los paquetes bajo `src/`, podés clonar el repo y compilarlo directo:
+
+```bash
+git clone https://github.com/toiaalynch/robotica-tp-final.git
+cd robotica-tp-final
+colcon build --symlink-install
+source install/setup.bash   # en Mac/zsh: install/setup.zsh
 ```
 
 ---
@@ -44,7 +54,7 @@ cada partícula mantiene su propio mapa de ocupación**, localizándose con
 del robot. El mapa resultante es el insumo de localización de las Partes B y C.
 
 Ejecución rápida (3 terminales; ver detalle en
-**[slam_gridmap/README.md](slam_gridmap/README.md)**):
+**[src/slam_gridmap/README.md](src/slam_gridmap/README.md)**):
 
 ```bash
 # Terminal 1 — simulación

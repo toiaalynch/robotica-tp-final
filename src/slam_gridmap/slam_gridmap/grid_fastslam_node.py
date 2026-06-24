@@ -233,6 +233,15 @@ class GridFastSlamNode(Node):
         self.last_stamp = None                 # timestamp del ultimo /scan
         self.create_timer(0.05, self.broadcast_map_to_odom)
 
+        # Autoguardado periodico del mapa: NO dependas de cerrar con Ctrl+C.
+        # Cada 'autosave_period' segundos guarda el .pgm + .yaml (sin PNG, para
+        # que sea liviano). Asi, aunque Gazebo se cuelgue o cierres mal la
+        # terminal, siempre queda en disco el ultimo mapa.
+        self.declare_parameter("autosave_period", 15.0)
+        ap = float(self.get_parameter("autosave_period").value)
+        if ap > 0:
+            self.create_timer(ap, lambda: self.save_map(with_png=False))
+
         self.get_logger().info(
             f"Grid-Based FastSLAM iniciado [robot={self.robot_type}]: "
             f"{n} particulas, resolucion {map_args['resolution']} m/celda. "
@@ -445,10 +454,9 @@ class GridFastSlamNode(Node):
     # Guardar el mapa final en formato map_server (.pgm + .yaml),
     # directamente reutilizable como insumo de las Partes B y C.
     # ==================================================================
-    def save_map(self):
+    def save_map(self, with_png=True):
         if not self.slam.map_initialized:
-            self.get_logger().warn("No hay mapa para guardar todavia.")
-            return
+            return                         # todavia no hay nada que guardar
         path = self.get_parameter("map_save_path").value
         if not path:
             path = os.path.join(os.path.expanduser("~"), "maps", "mapa_slam")
@@ -478,8 +486,9 @@ class GridFastSlamNode(Node):
             f.write("negate: 0\noccupied_thresh: 0.65\nfree_thresh: 0.25\n")
         self.get_logger().info(f"Mapa guardado en {pgm} (+ .yaml)")
 
-        # PNG presentable para el informe (opcional)
-        if self.get_parameter("save_png").value:
+        # PNG presentable para el informe (solo en el guardado final, no en el
+        # autoguardado periodico, porque renderizar con matplotlib es costoso)
+        if with_png and self.get_parameter("save_png").value:
             try:
                 self._save_png(path + ".png", grid)
                 self.get_logger().info(f"PNG del mapa guardado en {path}.png")

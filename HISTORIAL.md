@@ -67,3 +67,9 @@ FastSLAM)** por ser la de menor complejidad conceptual.
   (`save_png`, default true): paredes negras / libre blanco / desconocido gris,
   con las trayectorias real, odometría pura y SLAM superpuestas — listo para el
   informe.
+- Reorganización del repo a estructura de **workspace** (`src/`): los paquetes
+  ROS van bajo `src/`, con README de portada y `consignas/` para los PDFs.
+- Robustez: agregado **autoguardado periódico** del mapa (`autosave_period`,
+  default 15 s) para no depender de cerrar con Ctrl+C. Además, launch
+  `casa_headless.launch.py` para correr Gazebo sin la ventana 3D (que crashea en
+  Mac M-series por OpenGL/Metal).

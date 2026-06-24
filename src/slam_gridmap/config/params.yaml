@@ -59,3 +59,4 @@ grid_fastslam:
     publish_likelihoodfield: true   # publica /likelihoodfield (debug)
     map_save_path: ""               # vacio -> ~/maps/mapa_slam (.pgm + .yaml)
     save_png: true                  # ademas guarda un PNG presentable (.png) para el informe
+    autosave_period: 15.0           # guarda el mapa solo cada 15 s (0 = desactivar)

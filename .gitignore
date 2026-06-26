@@ -2,6 +2,7 @@
 build/
 install/
 log/
+run_logs/
 
 # --- Python ---
 __pycache__/
@@ -14,6 +15,12 @@ __pycache__/
 mapa_slam.*
 maps/
 
+# --- Mapa final seleccionado para entrega / Parte B ---
+!src/slam_gridmap/maps/
+!src/slam_gridmap/maps/mapa_fastslam_final_v2.pgm
+!src/slam_gridmap/maps/mapa_fastslam_final_v2.yaml
+!src/slam_gridmap/maps/mapa_fastslam_final_v2.png
+
 # --- macOS ---
 .DS_Store
 *.webloc
@@ -21,3 +28,6 @@ maps/
 # --- Editores ---
 .vscode/
 .idea/
+
+# --- Simulacion local opcional (no incluida por defecto) ---
+src/turtlebot3_custom_simulation/

@@ -1,8 +1,7 @@
 # Historial de cambios — TP Final I-402 (Robótica)
 
-Bitácora compartida del grupo. Sirve para que cualquier integrante (o su agente
-de IA) pueda ver de un vistazo **qué se hizo hasta el momento** sin leer todo el
-código.
+Bitacora compartida del grupo. Sirve para que cualquier integrante pueda ver
+de un vistazo **que se hizo hasta el momento** sin leer todo el codigo.
 
 ---
 
@@ -11,8 +10,8 @@ código.
 **Para las personas:** leé el "Estado actual" para el panorama, y el "Historial"
 para el detalle cronológico.
 
-**Para la IA (instrucciones):** cada vez que hagas un cambio relevante en el
-proyecto, actualizá este archivo:
+**Para mantener la bitacora:** cada vez que se haga un cambio relevante en el
+proyecto, actualizar este archivo:
 
 1. Agregá una entrada **arriba de todo** en la sección "Historial" (orden
    cronológico inverso: lo más nuevo primero), con el formato:
@@ -43,7 +42,26 @@ FastSLAM)** por ser la de menor complejidad conceptual.
 
 ## Historial
 
-### 2026-06-23 — Toia (con IA) — Parte A
+### 2026-06-25 — Alan — Parte A
+
+- Generado y seleccionado el mapa final de SLAM **`mapa_fastslam_final_v2`**
+  como insumo para la Parte B. Se guarda en `src/slam_gridmap/maps/` en formato
+  `map_server` (`.pgm` + `.yaml`) y con una vista `.png` para informe/defensa.
+- Se compararon varias corridas alternativas (refuerzos locales, ajuste de
+  `p_free`/`p_occ` y movimiento continuo por `/cmd_vel` con waypoints). Aunque
+  algunas reducian una incertidumbre local en la esquina inferior izquierda,
+  empeoraban la consistencia global del mapa.
+- Criterio de seleccion: V2 mantiene mejor equilibrio entre paredes exteriores
+  rectas, pared central sin duplicaciones severas, objetos principales
+  reconocibles y topologia apta para planificacion.
+- Ajustado `free_thresh` del `.yaml` a `0.196` para conservar las celdas
+  grises del `.pgm` como desconocidas al cargar el mapa, evitando que zonas no
+  exploradas sean interpretadas como libres por el planificador.
+- Queda documentado que la mesa/sofa puede verse parcialmente por el LIDAR 2D:
+  el sensor detecta las partes que intersectan su plano de escaneo (por ejemplo,
+  patas/bordes), no necesariamente la tapa completa del objeto.
+
+### 2026-06-23 — Toia — Parte A
 
 - Creado el paquete ROS 2 **`slam_gridmap`** (carpeta `TPF/slam_gridmap`) que
   implementa **Grid-Based FastSLAM** desde cero (Opción 1).

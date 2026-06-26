@@ -1,0 +1,64 @@
+# ===========================================================================
+# Parametros de la navegacion completa (Parte B, Sistema 1: grilla pura).
+# Carga dos nodos: mcl_localization (localizacion) y navigator (FSM).
+# Se usa con: ros2 launch nav_gridmap navigation.launch.py
+# ===========================================================================
+
+mcl_localization:
+  ros__parameters:
+    use_sim_time: true
+    robot_type: "tb3"
+    map_yaml: ""                    # lo completa el launch
+    num_particles: 500
+    alpha: [0.05, 0.05, 0.05, 0.05]
+    neff_ratio: 0.5
+    seed: 1
+    sigma_hit: 0.20
+    z_hit: 0.85
+    z_rand: 0.15
+    alpha_slow: 0.001
+    alpha_fast: 0.10
+    init_std_xy: 0.30
+    init_std_theta: 0.25
+    global_init: false
+    scan_subsample: 6
+    max_range: 0.0
+    keyframe_dist: 0.10
+    keyframe_angle: 0.10
+    map_frame: "map"
+    odom_frame: "odom"
+    transform_tolerance: 0.1
+    publish_map: true
+
+navigator:
+  ros__parameters:
+    use_sim_time: true
+    robot_type: "tb3"
+    map_yaml: ""                    # lo completa el launch
+
+    # --- planificador (A* con inflado) ---
+    robot_radius: 0.14              # radio efectivo del robot [m] (burger ~0.105)
+    inflation_radius: 0.35          # hasta aca penaliza acercarse a paredes [m]
+    inflation_cost: 8.0             # cuanto penaliza (rutas mas centradas)
+
+    # --- seguimiento (pure pursuit) ---
+    lookahead: 0.35                 # distancia del punto de mira [m]
+    v_max: 0.22                     # velocidad lineal max [m/s] (burger)
+    w_max: 2.5                      # velocidad angular max [rad/s]
+    goal_tol: 0.10                  # tolerancia de POSICION [m]
+    yaw_tol: 0.08                   # tolerancia de ANGULO final [rad] (~4.5 deg)
+    slow_radius: 0.45               # distancia para empezar a frenar [m]
+
+    # --- evasion de obstaculos no mapeados ---
+    stop_distance: 0.25             # frenado de emergencia al frente [m]
+    obstacle_check_period: 0.2      # cada cuanto revisar el LIDAR [s]
+    dynamic_ttl: 6.0                # vida de un obstaculo dinamico marcado [s]
+    replan_cooldown: 1.0            # tiempo minimo entre re-planificaciones [s]
+    wall_tol: 0.20                  # margen para no confundir pared con obstaculo [m]
+
+    # --- general ---
+    control_rate: 20.0              # Hz del bucle de control
+    map_frame: "map"
+    base_frame: "base_footprint"    # tb4: base_link
+    max_range: 0.0
+    tf_timeout: 0.2

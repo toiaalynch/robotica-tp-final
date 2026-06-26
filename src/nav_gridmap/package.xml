@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>nav_gridmap</name>
+  <version>0.1.0</version>
+  <description>
+    Parte B del TP Final (I-402): Navegacion Autonoma sobre grilla pura
+    (Sistema 1). Localizacion por Monte Carlo (MCL) contra el mapa estatico
+    de la Parte A, planificacion de ruta, seguimiento de trayectoria y
+    maquina de estados. Reutiliza los modulos matematicos de slam_gridmap.
+    Probado con TurtleBot3 en Gazebo (ROS 2 Humble).
+  </description>
+  <maintainer email="vlynch@udesa.edu.ar">Toia</maintainer>
+  <license>MIT</license>
+
+  <depend>rclpy</depend>
+  <depend>nav_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>std_msgs</depend>
+  <depend>visualization_msgs</depend>
+  <depend>tf2_ros</depend>
+  <depend>python3-numpy</depend>
+  <depend>python3-scipy</depend>
+
+  <!-- Reutilizamos los modulos matematicos de la Parte A (motion_model,
+       likelihood_field, resampling) por dependencia, sin duplicar codigo. -->
+  <depend>slam_gridmap</depend>
+
+  <exec_depend>python3-yaml</exec_depend>
+  <exec_depend>python3-pil</exec_depend>
+  <exec_depend>rviz2</exec_depend>
+  <exec_depend>turtlebot3_gazebo</exec_depend>
+
+  <test_depend>ament_copyright</test_depend>
+  <test_depend>ament_flake8</test_depend>
+  <test_depend>ament_pep257</test_depend>
+  <test_depend>python3-pytest</test_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>

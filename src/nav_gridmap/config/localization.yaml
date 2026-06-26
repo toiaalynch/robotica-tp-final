@@ -1,0 +1,57 @@
+# ===========================================================================
+# Parametros del nodo de Localizacion MCL (Parte B, Sistema 1: grilla pura).
+# Se cargan con: ros2 launch nav_gridmap localization.launch.py
+# ===========================================================================
+mcl_localization:
+  ros__parameters:
+    use_sim_time: true              # OBLIGATORIO con Gazebo (reloj de la sim)
+
+    # --- Robot (portabilidad TB3 simulado / TB4 real) ---
+    robot_type: "tb3"               # "tb3" o "tb4"
+
+    # --- Mapa estatico ---
+    # Vacio -> el launch usa el mapa instalado en el paquete
+    # (maps/mapa_fastslam_final_v2.yaml). Para otro mapa, pasa map:=/ruta.yaml
+    map_yaml: ""
+
+    # --- Filtro de particulas MCL ---
+    num_particles: 500              # 300-800: mas = mejor cobertura inicial
+    alpha: [0.05, 0.05, 0.05, 0.05] # ruido del modelo de odometria (a1..a4)
+    neff_ratio: 0.5                 # resamplea si N_eff < 0.5 * N
+    seed: 1                         # reproducibilidad
+
+    # --- Modelo del sensor (likelihood field) ---
+    sigma_hit: 0.20                 # incertidumbre del LIDAR [m]
+    z_hit: 0.85                     # peso del termino gaussiano
+    z_rand: 0.15                    # piso de probabilidad (robustez)
+
+    # --- Augmented MCL (recuperacion ante "secuestro" / mala pose) ---
+    alpha_slow: 0.001               # promedio lento del peso
+    alpha_fast: 0.10                # promedio rapido del peso (alpha_slow << alpha_fast)
+
+    # --- Siembra inicial (al recibir 2D Pose Estimate) ---
+    init_std_xy: 0.30               # desvio de la nube en x,y [m]
+    init_std_theta: 0.25            # desvio de la nube en orientacion [rad]
+    global_init: false              # true -> arranca global (sin esperar initialpose)
+
+    # --- LIDAR y keyframes ---
+    scan_subsample: 6               # usar 1 de cada 6 rayos (mas particulas -> submuestrear mas)
+    max_range: 0.0                  # 0 -> usa el range_max del LaserScan
+    keyframe_dist: 0.10             # correr un paso de MCL cada 10 cm...
+    keyframe_angle: 0.10            # ...o cada ~6 grados de giro
+    sensor_offset_x: 0.0            # offset del LIDAR respecto del centro del robot
+    sensor_offset_y: 0.0
+
+    # --- Frames ---
+    map_frame: "map"
+    odom_frame: "odom"
+    transform_tolerance: 0.1        # margen del TF map->odom [s]
+
+    # --- Topicos / QoS / fisica del LIDAR (los define robot_type; descomenta para forzar) ---
+    # scan_topic: "/scan"
+    # odom_topic: "/calc_odom"
+    # odom_qos: "reliable"
+    # lidar_angle_offset: 0.0
+    # discard_zero_intensity: false
+
+    publish_map: true               # republica el mapa estatico en /map

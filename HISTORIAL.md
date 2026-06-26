@@ -28,7 +28,7 @@ proyecto, actualizar este archivo:
 | Parte | Estado | Detalle |
 |---|---|---|
 | **A** — SLAM | 🟩 Implementada y verificada (falta probar en Gazebo real) | Paquete `slam_gridmap`: Grid-Based FastSLAM (Opción 1). |
-| **B** — Navegación | ⬜ Pendiente | — |
+| **B** — Navegación | 🟩 Implementada y verificada (falta probar en Gazebo) | Paquete `nav_gridmap` (Sistema 1, grilla pura). Localización MCL + planificación A* + seguimiento pure pursuit + evasión + máquina de estados. Tests offline OK. |
 | **C** — Hardware real | ⬜ Pendiente | Se usa TurtleBot4 real. |
 | Informe técnico (PDF) | ⬜ Pendiente | — |
 | Defensa (diapositivas) | ⬜ Pendiente | — |
@@ -41,6 +41,54 @@ FastSLAM)** por ser la de menor complejidad conceptual.
 ---
 
 ## Historial
+
+### 2026-06-26 — Toia — Parte B
+
+- Creado el paquete ROS 2 **`nav_gridmap`** (carpeta `src/nav_gridmap`) para la
+  navegación autónoma. Como la Parte A usó Opción 1, se trabaja con el
+  **Sistema 1: navegación basada en grilla pura**. Se construye por componentes.
+- **Componente 1 — Localización (MCL) listo y verificado.** Filtro de partículas
+  de localización pura contra el **mapa fijo** de la Parte A
+  (`mapa_fastslam_final_v2`). A diferencia del SLAM, el mapa es compartido y solo
+  se estima la pose. Reutiliza por dependencia los módulos de la Parte A
+  (`motion_model`, `likelihood_field`, `resampling`), sin duplicar código.
+- Arquitectura modular (numpy puro, sin ROS, testeable sola): `static_map.py`
+  (carga el `.pgm`/`.yaml` y precalcula el likelihood field), `mcl.py` (filtro +
+  **MCL aumentado** para re-localizarse si el robot se pierde); la plomería ROS
+  en `mcl_node.py`.
+- El nodo publica el mapa en `/map` (latched), escucha `/initialpose` (botón *2D
+  Pose Estimate* de RViz), corre el filtro por keyframes con `/scan` + `/calc_odom`,
+  y publica `/amcl_pose`, `/particlecloud` y el TF **`map→odom`** (la corrección
+  que usarán el planificador y el control). Nombres de tópicos al estilo Nav2/AMCL
+  para que RViz enchufe sin configuración extra.
+- Agregados: `launch/localization.launch.py` (resuelve solo la ruta del mapa),
+  `config/localization.yaml`, `rviz/localization.rviz`, `README.md` y un test
+  offline. Copia del mapa en `maps/` para que el launch lo encuentre tras instalar.
+- **Verificado:** sintaxis OK; el test sintético converge a la pose verdadera
+  (error ~0.015 m / 0.2°) partiendo de una pose inicial desplazada; el cargador
+  lee el mapa real (320×320, 16×16 m) con la orientación correcta.
+- **Componentes 2-5 — Planificación + Seguimiento + Evasión + FSM listos y
+  verificados.** Se completó todo el stack de navegación:
+  - `planner.py`: **A\*** sobre la grilla con **costmap inflado** (transformada
+    de distancia): celdas a menos del radio del robot son letales, gradiente de
+    costo cerca de paredes (rutas centradas), desconocido intransitable;
+    suavizado por línea de visión. Re-planificación con obstáculos dinámicos.
+  - `controller.py`: **pure pursuit** suave (lookahead + curvatura), frenado en
+    curvas y al llegar, y control del **ángulo final** (gira en el lugar).
+    Límites de TB3 burger.
+  - `obstacle.py`: detecta obstáculos **no mapeados** (separa lo nuevo de las
+    paredes conocidas), parada de seguridad + marcado para re-planificar.
+  - `navigator_node.py`: **máquina de estados**
+    `WAIT_GOAL→PLANNING→FOLLOWING→REACHED`, escucha `/goal_pose`, pose por TF
+    `map→base`, publica `/cmd_vel`, `/plan` y `/nav_state`. Soporta **nuevo goal
+    a mitad de camino** (re-planifica) y **evasión** (frena, marca, re-planifica).
+- Integración: `launch/navigation.launch.py` (localización + navegador + RViz),
+  `config/navigation.yaml`, `rviz/navigation.rviz`, entry points `navigator`.
+- **Verificado (tests offline, 6/6 OK):** A\* halla rutas válidas que no pisan
+  paredes; pure pursuit lleva el robot al goal y al ángulo final en sim
+  cinemática (error ~0.10 m / ~4°); la evasión distingue obstáculo nuevo de
+  pared; **end-to-end en el mapa real** (esquina a esquina de la casa, 5
+  waypoints) completa el recorrido. Falta probar en Gazebo real.
 
 ### 2026-06-25 — Alan — Parte A
 

@@ -21,6 +21,12 @@ maps/
 !src/slam_gridmap/maps/mapa_fastslam_final_v2.yaml
 !src/slam_gridmap/maps/mapa_fastslam_final_v2.png
 
+# --- Copia del mapa que usa el paquete de navegacion (Parte B) ---
+# Necesaria para que el launch la instale y la encuentre tras clonar.
+!src/nav_gridmap/maps/
+!src/nav_gridmap/maps/mapa_fastslam_final_v2.pgm
+!src/nav_gridmap/maps/mapa_fastslam_final_v2.yaml
+
 # --- macOS ---
 .DS_Store
 *.webloc

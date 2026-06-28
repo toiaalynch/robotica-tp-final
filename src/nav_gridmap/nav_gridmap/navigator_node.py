@@ -15,6 +15,9 @@ Flujo de estados:
             ^                          | falla              |  obstaculo / nuevo goal
             |                          v                    v
             |                    (avisa y vuelve)     (marca y RE-PLANIFICA)
+            |                                              |
+            |                         atasco               v
+            |                    +-------------------< RECOVERY
             |   posicion + angulo final alcanzados          |
             +-----------------------< REACHED <-------------+
 
@@ -84,6 +87,7 @@ class NavigatorNode(Node):
         self.declare_parameter("robot_radius", 0.14)
         self.declare_parameter("inflation_radius", 0.35)
         self.declare_parameter("inflation_cost", 8.0)
+        self.declare_parameter("simplify_path", True)
 
         # --- controlador (pure pursuit) ---
         self.declare_parameter("lookahead", 0.35)
@@ -97,8 +101,17 @@ class NavigatorNode(Node):
         self.declare_parameter("stop_distance", 0.25)     # frenado de emergencia [m]
         self.declare_parameter("obstacle_check_period", 0.2)  # s
         self.declare_parameter("dynamic_ttl", 6.0)        # vida de un obstaculo dinamico [s]
+        self.declare_parameter("dynamic_inflate_cells", 3)  # inflado extra de obstaculos nuevos
         self.declare_parameter("replan_cooldown", 1.0)    # s entre re-planificaciones
         self.declare_parameter("wall_tol", 0.20)
+        self.declare_parameter("clear_dynamic_on_new_goal", True)
+
+        # --- recuperacion ante atasco ---
+        self.declare_parameter("stuck_timeout", 8.0)      # s sin progreso antes de recuperar
+        self.declare_parameter("stuck_min_progress", 0.08)  # mejora minima [m] al goal
+        self.declare_parameter("recovery_time", 1.6)      # s girando en el lugar
+        self.declare_parameter("recovery_w", 0.7)         # rad/s
+        self.declare_parameter("max_recoveries", 3)
 
         # --- general ---
         self.declare_parameter("control_rate", 20.0)      # Hz
@@ -138,10 +151,18 @@ class NavigatorNode(Node):
         self.stop_distance = float(gp("stop_distance").value)
         self.obstacle_check_period = float(gp("obstacle_check_period").value)
         self.dynamic_ttl = float(gp("dynamic_ttl").value)
+        self.dynamic_inflate_cells = int(gp("dynamic_inflate_cells").value)
         self.replan_cooldown = float(gp("replan_cooldown").value)
         self.wall_tol = float(gp("wall_tol").value)
+        self.clear_dynamic_on_new_goal = bool(gp("clear_dynamic_on_new_goal").value)
         self.max_range_param = float(gp("max_range").value)
         self.tf_timeout = float(gp("tf_timeout").value)
+        self.simplify_path = bool(gp("simplify_path").value)
+        self.stuck_timeout = float(gp("stuck_timeout").value)
+        self.stuck_min_progress = float(gp("stuck_min_progress").value)
+        self.recovery_time = float(gp("recovery_time").value)
+        self.recovery_w = float(gp("recovery_w").value)
+        self.max_recoveries = int(gp("max_recoveries").value)
 
         # --- estado ---
         self.state = 'WAIT_GOAL'
@@ -151,6 +172,10 @@ class NavigatorNode(Node):
         self._last_replan = -1e9
         self._last_obs_check = -1e9
         self._reached_logged = False
+        self._best_goal_dist = np.inf
+        self._last_progress_time = 0.0
+        self._recovery_until = 0.0
+        self._recoveries = 0
 
         # --- TF ---
         self.tf_buffer = tf2_ros.Buffer()
@@ -181,6 +206,9 @@ class NavigatorNode(Node):
         yaw = yaw_from_quat(msg.pose.orientation)
         self.goal = (x, y, yaw)
         self._reached_logged = False
+        self._recoveries = 0
+        if self.clear_dynamic_on_new_goal:
+            self.dynamic_cells.clear()
         self.state = 'PLANNING'           # nuevo goal -> (re)planificar siempre
         self.get_logger().info(
             f"Nuevo goal: ({x:.2f}, {y:.2f}, {math.degrees(yaw):.0f}deg). Planificando...")
@@ -232,6 +260,10 @@ class NavigatorNode(Node):
             self._do_following(pose, now)
             return
 
+        if self.state == 'RECOVERY':
+            self._do_recovery(now)
+            return
+
         if self.state == 'REACHED':
             self._stop()
             if not self._reached_logged:
@@ -248,7 +280,9 @@ class NavigatorNode(Node):
         self._expire_dynamic()
         cells = list(self.dynamic_cells.keys())
         path = self.planner.plan_with_dynamic(
-            (pose[0], pose[1]), (self.goal[0], self.goal[1]), cells)
+            (pose[0], pose[1]), (self.goal[0], self.goal[1]), cells,
+            inflate_cells=self.dynamic_inflate_cells,
+            simplify=self.simplify_path)
         self._last_replan = self._now()
         if path is None or len(path) == 0:
             self.get_logger().warn(
@@ -258,6 +292,7 @@ class NavigatorNode(Node):
             self.state = 'WAIT_GOAL'
             return
         self.controller.set_path(path, goal_yaw=self.goal[2])
+        self._reset_progress_watch(pose)
         self._publish_plan(path)
         self.state = 'FOLLOWING'
         self.get_logger().info(f"Camino planificado: {len(path)} waypoints. Siguiendo...")
@@ -296,6 +331,59 @@ class NavigatorNode(Node):
         if status == 'done':
             self._publish_cmd(0.0, 0.0)
             self.state = 'REACHED'
+            return
+
+        if self._is_stuck(pose, now):
+            self._stop()
+            self._register_scan_as_dynamic(pose, now)
+            if self._recoveries >= self.max_recoveries:
+                self.get_logger().warn(
+                    "El robot no logra progresar; se detiene y espera un nuevo goal.")
+                self.state = 'WAIT_GOAL'
+                return
+            self._recoveries += 1
+            self._recovery_until = now + self.recovery_time
+            self.get_logger().warn(
+                f"Posible atasco detectado. Recuperacion {self._recoveries}/"
+                f"{self.max_recoveries}: giro corto y re-planificacion.")
+            self.state = 'RECOVERY'
+
+    # ------------------------------------------------------------------
+    def _do_recovery(self, now):
+        if now < self._recovery_until:
+            self._publish_cmd(0.0, self.recovery_w)
+            return
+        self._stop()
+        self.state = 'PLANNING'
+
+    # ------------------------------------------------------------------
+    def _reset_progress_watch(self, pose):
+        if self.goal is None:
+            self._best_goal_dist = np.inf
+        else:
+            self._best_goal_dist = float(np.hypot(self.goal[0] - pose[0],
+                                                  self.goal[1] - pose[1]))
+        self._last_progress_time = self._now()
+
+    # ------------------------------------------------------------------
+    def _is_stuck(self, pose, now):
+        if self.goal is None or self.stuck_timeout <= 0:
+            return False
+        dist = float(np.hypot(self.goal[0] - pose[0], self.goal[1] - pose[1]))
+        if dist < (self._best_goal_dist - self.stuck_min_progress):
+            self._best_goal_dist = dist
+            self._last_progress_time = now
+            return False
+        return (now - self._last_progress_time) >= self.stuck_timeout
+
+    # ------------------------------------------------------------------
+    def _register_scan_as_dynamic(self, pose, now):
+        if not self.scan:
+            return
+        ranges, angles, max_range = self.scan
+        info = detect_unmapped(self.smap, pose, ranges, angles, max_range,
+                               wall_tol=self.wall_tol)
+        self._register_obstacle(info['cells'], now)
 
     # ==================================================================
     # Obstaculos dinamicos: registro con expiracion (TTL).

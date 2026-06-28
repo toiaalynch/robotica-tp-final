@@ -248,9 +248,11 @@ class GridPlanner:
     # de forma temporal, planifica, y restaura el costmap. 'extra_cells' es un
     # iterable de (i, j).
     # ------------------------------------------------------------------
-    def plan_with_dynamic(self, start_xy, goal_xy, extra_cells, inflate_cells=3):
+    def plan_with_dynamic(self, start_xy, goal_xy, extra_cells,
+                          inflate_cells=3, simplify=True):
+        inflate_cells = max(0, int(inflate_cells))
         if not extra_cells:
-            return self.plan(start_xy, goal_xy)
+            return self.plan(start_xy, goal_xy, simplify=simplify)
 
         saved_trav = self.traversable.copy()
         saved_cost = self.cell_cost.copy()

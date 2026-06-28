@@ -45,16 +45,25 @@ navigator:
     lookahead: 0.35                 # distancia del punto de mira [m]
     v_max: 0.22                     # velocidad lineal max [m/s] (burger)
     w_max: 2.5                      # velocidad angular max [rad/s]
-    goal_tol: 0.10                  # tolerancia de POSICION [m]
+    goal_tol: 0.15                  # tolerancia de POSICION [m]
     yaw_tol: 0.08                   # tolerancia de ANGULO final [rad] (~4.5 deg)
     slow_radius: 0.45               # distancia para empezar a frenar [m]
 
     # --- evasion de obstaculos no mapeados ---
     stop_distance: 0.25             # frenado de emergencia al frente [m]
     obstacle_check_period: 0.2      # cada cuanto revisar el LIDAR [s]
-    dynamic_ttl: 6.0                # vida de un obstaculo dinamico marcado [s]
+    dynamic_ttl: 4.0                # vida de un obstaculo dinamico marcado [s]
+    dynamic_inflate_cells: 1        # margen extra alrededor de obstaculos nuevos
     replan_cooldown: 1.0            # tiempo minimo entre re-planificaciones [s]
-    wall_tol: 0.20                  # margen para no confundir pared con obstaculo [m]
+    wall_tol: 0.30                  # margen para no confundir pared con obstaculo [m]
+    clear_dynamic_on_new_goal: true # cada goal releva de nuevo los obstaculos
+
+    # --- recuperacion ante atasco ---
+    stuck_timeout: 8.0              # si no mejora en este tiempo, recupera [s]
+    stuck_min_progress: 0.08        # mejora minima esperada hacia el goal [m]
+    recovery_time: 1.6              # giro corto antes de re-planificar [s]
+    recovery_w: 0.7                 # velocidad angular de recuperacion [rad/s]
+    max_recoveries: 3               # tras esto, espera un goal nuevo
 
     # --- general ---
     control_rate: 20.0              # Hz del bucle de control

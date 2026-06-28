@@ -17,6 +17,15 @@ El paquete se construye **por componentes**. Estado actual:
 > Reutiliza por dependencia los módulos matemáticos de la Parte A
 > (`motion_model`, `likelihood_field`, `resampling`), sin duplicar código.
 
+### Mapa usado en Parte B
+
+El mapa SLAM original de la Parte A queda conservado como
+`maps/mapa_fastslam_final_v2.yaml`. Para navegación se usa por defecto
+`maps/mapa_fastslam_final_v2_nav.yaml`, una copia derivada que agrega cuatro
+puntos ocupados en las patas de la mesa del entorno simulado. Esto evita que el
+planificador trate esa zona como libre cuando Gazebo sí tiene obstáculos físicos
+finos.
+
 ---
 
 ## Cómo correr la navegación completa
@@ -44,6 +53,18 @@ En **RViz**:
    magenta `/plan`) y va solo, frenando y replanificando si aparece un obstáculo.
 4. Para ir a otro lado, marcá un **nuevo goal** (incluso a mitad de camino):
    replanifica automáticamente.
+
+### Smoke test sin RViz
+
+Para verificar rápido que la integración corre en Gazebo headless:
+
+```bash
+scripts/run_nav_gridmap_smoke.sh
+```
+
+El script levanta la simulación, arranca `navigation.launch.py rviz:=false`,
+publica una pose inicial y un goal de prueba, y comprueba que se publiquen
+`/amcl_pose`, `/plan`, `/nav_state` y `/cmd_vel`.
 
 ### Máquina de estados
 
@@ -82,7 +103,7 @@ pose inicial, deriva), reinyecta partículas para **re-localizarse**.
 | Dirección | Tópico | Tipo |
 |---|---|---|
 | sub | `/scan` | `sensor_msgs/LaserScan` |
-| sub | `/calc_odom` | `nav_msgs/Odometry` |
+| sub | `/odom` | `nav_msgs/Odometry` |
 | sub | `/initialpose` | `geometry_msgs/PoseWithCovarianceStamped` |
 | pub | `/map` | `nav_msgs/OccupancyGrid` (latched) |
 | pub | `/amcl_pose` | `geometry_msgs/PoseWithCovarianceStamped` |

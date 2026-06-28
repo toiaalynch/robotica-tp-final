@@ -21,7 +21,7 @@ y (b) marcar el obstaculo en la grilla y pedir una ruta nueva que lo rodee.
 
 import numpy as np
 
-from .static_map import OCCUPIED
+from .static_map import FREE, OCCUPIED
 
 
 def project_scan(pose, ranges, angles, max_range):
@@ -67,13 +67,17 @@ def detect_unmapped(static_map, pose, ranges, angles, max_range,
     dwall = np.full(r.shape, 1e3, dtype=np.float32)
     dwall[inside] = lf[jj[inside], ii[inside]]
 
-    # un punto es obstaculo NUEVO si: esta dentro del mapa, lejos de toda pared
-    # conocida (dwall > wall_tol) y no cae sobre una celda ya marcada ocupada.
+    # Un punto es obstaculo NUEVO si cae dentro de una celda que el mapa creia
+    # LIBRE. No marcamos UNKNOWN como obstaculo dinamico: en este TP el mapa de
+    # SLAM conserva zonas desconocidas y tratarlas como obstaculos nuevos genera
+    # falsos positivos/re-planificaciones espurias.
     is_new = inside & (dwall > wall_tol)
     if np.any(inside):
         known_occ = np.zeros(r.shape, dtype=bool)
         known_occ[inside] = (static_map.occ[jj[inside], ii[inside]] == OCCUPIED)
-        is_new &= ~known_occ
+        known_free = np.zeros(r.shape, dtype=bool)
+        known_free[inside] = (static_map.occ[jj[inside], ii[inside]] == FREE)
+        is_new &= known_free & ~known_occ
 
     if not np.any(is_new):
         return {'cells': [], 'front_dist': np.inf, 'min_dist': np.inf}

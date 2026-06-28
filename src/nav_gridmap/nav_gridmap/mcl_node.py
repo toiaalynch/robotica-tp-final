@@ -8,14 +8,14 @@ aparte). Este nodo:
   - carga el MAPA ESTATICO de la Parte A (mapa_fastslam_final_v2) y lo publica
     en /map (latched) para que RViz lo muestre,
   - escucha /initialpose (boton "2D Pose Estimate" de RViz) para sembrar la nube,
-  - escucha /scan (LIDAR) y /calc_odom (odometria con deriva),
+  - escucha /scan (LIDAR) y /odom (odometria de Gazebo en TB3),
   - corre un paso de MCL cuando el robot se movio lo suficiente (keyframe),
   - publica la pose estimada /amcl_pose, la nube /particlecloud y, lo mas
     importante, el TF map->odom (la correccion que usaran el planner y el control).
 
 Entradas (topicos)
   /scan        sensor_msgs/LaserScan               -> rayos del LIDAR
-  /calc_odom   nav_msgs/Odometry                   -> odometria estimada (con error)
+  /odom        nav_msgs/Odometry                   -> odometria del robot
   /initialpose geometry_msgs/PoseWithCovarianceStamped -> pose inicial (RViz)
 
 Salidas (topicos)
@@ -68,7 +68,7 @@ def yaw_from_quat(q):
 ROBOT_PROFILES = {
     "tb3": {
         "scan_topic": "/scan",
-        "odom_topic": "/calc_odom",
+        "odom_topic": "/odom",
         "odom_qos": "reliable",
         "lidar_angle_offset": 0.0,
         "discard_zero_intensity": False,

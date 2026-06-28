@@ -28,7 +28,7 @@ proyecto, actualizar este archivo:
 | Parte | Estado | Detalle |
 |---|---|---|
 | **A** — SLAM | 🟩 Implementada y verificada (falta probar en Gazebo real) | Paquete `slam_gridmap`: Grid-Based FastSLAM (Opción 1). |
-| **B** — Navegación | 🟩 Implementada y verificada (falta probar en Gazebo) | Paquete `nav_gridmap` (Sistema 1, grilla pura). Localización MCL + planificación A* + seguimiento pure pursuit + evasión + máquina de estados. Tests offline OK. |
+| **B** — Navegación | 🟩 Implementada y verificada en Gazebo headless | Paquete `nav_gridmap` (Sistema 1, grilla pura). Localización MCL + planificación A* + seguimiento pure pursuit + evasión + máquina de estados. Tests offline OK y smoke test en Gazebo OK. |
 | **C** — Hardware real | ⬜ Pendiente | Se usa TurtleBot4 real. |
 | Informe técnico (PDF) | ⬜ Pendiente | — |
 | Defensa (diapositivas) | ⬜ Pendiente | — |
@@ -41,6 +41,46 @@ FastSLAM)** por ser la de menor complejidad conceptual.
 ---
 
 ## Historial
+
+### 2026-06-28 — Alan — Parte B
+
+- Generado el mapa de navegación **`mapa_fastslam_final_v2_nav`** a partir del
+  V2 original. Se conserva `mapa_fastslam_final_v2` como resultado de SLAM de
+  Parte A, y la copia `v2_nav` agrega cuatro puntos ocupados en las patas de la
+  mesa del entorno simulado.
+- Actualizados `localization.launch.py` y `navigation.launch.py` para usar por
+  defecto el mapa navegable `v2_nav`, manteniendo la opción `map:=...` para
+  cargar otro mapa si se desea.
+- Mejorada la máquina de estados del navegador con estado **`RECOVERY`** ante
+  atasco: si no hay progreso hacia el objetivo, gira brevemente, releva
+  obstáculos con LIDAR y re-planifica. También se limpia la capa dinámica al
+  recibir un goal nuevo.
+- Agregada suite `scripts/run_nav_goal_suite.sh` para validar navegación
+  headless con goals repetidos, salida por `/nav_state`, `/cmd_vel`, `/plan` y
+  logs por objetivo. Puede activarse el stress de mesa con `RUN_STRESS=true`.
+- **Verificado:** build OK, tests offline `6/6 OK`; en Gazebo headless con
+  `v2_nav`, la suite estándar llega a 3/3 goals y la corrida con
+  `RUN_STRESS=true` llega a 4/4 goals, incluyendo el objetivo cercano a la mesa.
+
+### 2026-06-27 — Alan — Parte B
+
+- Revisada e integrada la subida de Parte B (`nav_gridmap`) realizada el
+  2026-06-26: localizacion MCL, planificacion A*, seguimiento pure pursuit,
+  evasion de obstaculos y maquina de estados.
+- Ajustado el perfil `tb3` de MCL para usar `/odom` por defecto en Gazebo. Los
+  launch actuales de la casa publican `/odom`; `/calc_odom` no se levanta salvo
+  que se ejecute aparte el nodo custom de odometria.
+- Corregida la deteccion de obstaculos dinamicos: ahora solo marca obstaculos
+  nuevos sobre celdas que el mapa conoce como libres. Las celdas desconocidas
+  del mapa ya no generan falsos positivos de evasion/replanificacion.
+- Agregado `scripts/run_nav_gridmap_smoke.sh` para probar automaticamente la
+  integracion: levanta Gazebo headless, navegacion sin RViz, publica
+  `/initialpose` y `/goal_pose`, y verifica `/amcl_pose`, `/plan`,
+  `/nav_state` y `/cmd_vel`.
+- Verificado localmente: `colcon build --packages-select nav_gridmap`
+  correcto; `python3 -m pytest src/nav_gridmap/test -q` con 6/6 tests OK; smoke
+  test en Gazebo headless OK (`PLAN_OK`, estado `FOLLOWING` y objetivo
+  alcanzado).
 
 ### 2026-06-26 — Toia — Parte B
 
@@ -57,7 +97,7 @@ FastSLAM)** por ser la de menor complejidad conceptual.
   **MCL aumentado** para re-localizarse si el robot se pierde); la plomería ROS
   en `mcl_node.py`.
 - El nodo publica el mapa en `/map` (latched), escucha `/initialpose` (botón *2D
-  Pose Estimate* de RViz), corre el filtro por keyframes con `/scan` + `/calc_odom`,
+  Pose Estimate* de RViz), corre el filtro por keyframes con `/scan` + `/odom`,
   y publica `/amcl_pose`, `/particlecloud` y el TF **`map→odom`** (la corrección
   que usarán el planificador y el control). Nombres de tópicos al estilo Nav2/AMCL
   para que RViz enchufe sin configuración extra.

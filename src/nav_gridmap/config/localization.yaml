@@ -49,7 +49,7 @@ mcl_localization:
 
     # --- Topicos / QoS / fisica del LIDAR (los define robot_type; descomenta para forzar) ---
     # scan_topic: "/scan"
-    # odom_topic: "/calc_odom"
+    # odom_topic: "/odom"
     # odom_qos: "reliable"
     # lidar_angle_offset: 0.0
     # discard_zero_intensity: false

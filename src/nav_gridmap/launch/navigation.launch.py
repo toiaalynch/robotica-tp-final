@@ -40,7 +40,7 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
     pkg = get_package_share_directory('nav_gridmap')
-    default_map = os.path.join(pkg, 'maps', 'mapa_fastslam_final_v2.yaml')
+    default_map = os.path.join(pkg, 'maps', 'mapa_fastslam_final_v2_nav.yaml')
     params_file = os.path.join(pkg, 'config', 'navigation.yaml')
     rviz_config = os.path.join(pkg, 'rviz', 'navigation.rviz')
 

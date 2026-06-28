@@ -173,6 +173,7 @@ class NavigatorNode(Node):
         self._last_obs_check = -1e9
         self._reached_logged = False
         self._best_goal_dist = np.inf
+        self._last_progress_pose = None
         self._last_progress_time = 0.0
         self._recovery_until = 0.0
         self._recoveries = 0
@@ -363,6 +364,7 @@ class NavigatorNode(Node):
         else:
             self._best_goal_dist = float(np.hypot(self.goal[0] - pose[0],
                                                   self.goal[1] - pose[1]))
+        self._last_progress_pose = pose
         self._last_progress_time = self._now()
 
     # ------------------------------------------------------------------
@@ -370,8 +372,24 @@ class NavigatorNode(Node):
         if self.goal is None or self.stuck_timeout <= 0:
             return False
         dist = float(np.hypot(self.goal[0] - pose[0], self.goal[1] - pose[1]))
+
+        # En caminos con rodeos, la distancia recta al objetivo puede no bajar
+        # durante varios segundos aunque el robot este avanzando correctamente.
+        # Por eso tambien se considera progreso si la pose se desplazo respecto
+        # del ultimo punto observado.
+        moved = 0.0
+        if self._last_progress_pose is not None:
+            moved = float(np.hypot(pose[0] - self._last_progress_pose[0],
+                                   pose[1] - self._last_progress_pose[1]))
+        if moved >= self.stuck_min_progress:
+            self._last_progress_pose = pose
+            self._best_goal_dist = min(self._best_goal_dist, dist)
+            self._last_progress_time = now
+            return False
+
         if dist < (self._best_goal_dist - self.stuck_min_progress):
             self._best_goal_dist = dist
+            self._last_progress_pose = pose
             self._last_progress_time = now
             return False
         return (now - self._last_progress_time) >= self.stuck_timeout

@@ -264,7 +264,7 @@ class GridPlanner:
                         if self._in_bounds(ni, nj):
                             if di * di + dj * dj <= inflate_cells * inflate_cells:
                                 self.traversable[nj, ni] = False
-            return self.plan(start_xy, goal_xy)
+            return self.plan(start_xy, goal_xy, simplify=simplify)
         finally:
             self.traversable = saved_trav
             self.cell_cost = saved_cost

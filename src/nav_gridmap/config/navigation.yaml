@@ -37,16 +37,17 @@ navigator:
     map_yaml: ""                    # lo completa el launch
 
     # --- planificador (A* con inflado) ---
-    robot_radius: 0.14              # radio efectivo del robot [m] (burger ~0.105)
-    inflation_radius: 0.35          # hasta aca penaliza acercarse a paredes [m]
-    inflation_cost: 8.0             # cuanto penaliza (rutas mas centradas)
+    robot_radius: 0.17              # radio efectivo con margen [m] (burger ~0.105)
+    inflation_radius: 0.45          # hasta aca penaliza acercarse a paredes [m]
+    inflation_cost: 12.0            # cuanto penaliza (rutas mas centradas)
+    simplify_path: false            # evita que el suavizado corte esquinas
 
     # --- seguimiento (pure pursuit) ---
-    lookahead: 0.35                 # distancia del punto de mira [m]
-    v_max: 0.22                     # velocidad lineal max [m/s] (burger)
+    lookahead: 0.25                 # distancia del punto de mira [m]
+    v_max: 0.16                     # velocidad lineal max [m/s] (burger)
     w_max: 2.5                      # velocidad angular max [rad/s]
-    goal_tol: 0.15                  # tolerancia de POSICION [m]
-    yaw_tol: 0.08                   # tolerancia de ANGULO final [rad] (~4.5 deg)
+    goal_tol: 0.11                  # tolerancia de POSICION [m]
+    yaw_tol: 0.10                   # tolerancia de ANGULO final [rad] (~5.7 deg)
     slow_radius: 0.45               # distancia para empezar a frenar [m]
 
     # --- evasion de obstaculos no mapeados ---

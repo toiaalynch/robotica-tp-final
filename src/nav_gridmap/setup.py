@@ -31,6 +31,8 @@ setup(
             'mcl_localization = nav_gridmap.mcl_node:main',
             # Parte B - Navegador (planificacion + seguimiento + evasion + FSM)
             'navigator = nav_gridmap.navigator_node:main',
+            # Parte C - Percepcion de cono rojo y publicacion de goal navegable
+            'red_cone_mission = nav_gridmap.red_cone_mission_node:main',
         ],
     },
 )

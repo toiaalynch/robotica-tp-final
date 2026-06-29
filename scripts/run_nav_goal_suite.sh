@@ -32,7 +32,7 @@ cleanup() {
 echo "[1/7] Limpiando procesos previos"
 pkill -INT -x gzserver 2>/dev/null || true
 pkill -INT -x gzclient 2>/dev/null || true
-pkill -INT -f "nav_gridmap" 2>/dev/null || true
+pkill -INT -f "mcl_localization|navigator|rviz2_navigation" 2>/dev/null || true
 pkill -INT -f "spawn_entity.py" 2>/dev/null || true
 sleep 4
 
@@ -77,7 +77,7 @@ send_goal() {
     elapsed=$((elapsed + 3))
     state=$(timeout 4 ros2 topic echo /nav_state --once 2>/dev/null \
       | awk '/data:/ {print $2}' | tr -d "'\"" || true)
-    odom=$(timeout 4 ros2 topic echo /odom --once 2>/dev/null \
+    odom=$(timeout 4 ros2 topic echo /calc_odom --once 2>/dev/null \
       | awk '/position:/ {p=1} p&&/x:/ {x=$2} p&&/y:/ {y=$2; print x "," y; exit}' || true)
     echo "  t=${elapsed}s state=${state:-?} odom=${odom:-?}"
     if [ "$state" = "WAIT_GOAL" ]; then

@@ -29,7 +29,7 @@ proyecto, actualizar este archivo:
 |---|---|---|
 | **A** — SLAM | 🟩 Implementada y verificada (falta probar en Gazebo real) | Paquete `slam_gridmap`: Grid-Based FastSLAM (Opción 1). |
 | **B** — Navegación | 🟩 Implementada y verificada en Gazebo headless | Paquete `nav_gridmap` (Sistema 1, grilla pura). Localización MCL + planificación A* + seguimiento pure pursuit + evasión + máquina de estados. Tests offline OK y smoke test en Gazebo OK. |
-| **C** — Hardware real | ⬜ Pendiente | Se usa TurtleBot4 real. |
+| **C** — Hardware real | 🟨 En progreso | Percepción de conos rojos inicial agregada; falta validar con rosbag/cámara real. |
 | Informe técnico (PDF) | ⬜ Pendiente | — |
 | Defensa (diapositivas) | ⬜ Pendiente | — |
 
@@ -41,6 +41,22 @@ FastSLAM)** por ser la de menor complejidad conceptual.
 ---
 
 ## Historial
+
+### 2026-06-29 — Alan — Parte C
+
+- Agregado `red_cone_mission`, nodo de percepción que detecta conos rojos en
+  imagen RGB, estima una coordenada en `map` y publica `/red_cone/goal_pose` o
+  `/goal_pose` si se activa `auto_goal`.
+- Agregado `red_cone_vision.py` con segmentación offline testeable para ajustar
+  umbrales con rosbags antes de ir al laboratorio.
+- Incorporados `red_cone_mission.launch.py` y `config/perception.yaml` para
+  configurar tópicos de cámara, depth, CameraInfo y modo automático.
+- Corregida la portabilidad de odometría: TB3 simulado usa `/calc_odom` y
+  `calc_base_footprint`; TB4 real usa `/odom` con QoS `best_effort`.
+- Los launch de Gazebo/headless ahora levantan el nodo de `calc_odom` para que
+  la simulación no dependa de correrlo manualmente en otra terminal.
+- Pendiente: la Parte C todavía no fue validada con rosbag de visión ni con
+  cámara real; por ahora se verificó compilación y tests offline de segmentación.
 
 ### 2026-06-28 — Alan — Parte B
 
@@ -67,9 +83,8 @@ FastSLAM)** por ser la de menor complejidad conceptual.
 - Revisada e integrada la subida de Parte B (`nav_gridmap`) realizada el
   2026-06-26: localizacion MCL, planificacion A*, seguimiento pure pursuit,
   evasion de obstaculos y maquina de estados.
-- Ajustado el perfil `tb3` de MCL para usar `/odom` por defecto en Gazebo. Los
-  launch actuales de la casa publican `/odom`; `/calc_odom` no se levanta salvo
-  que se ejecute aparte el nodo custom de odometria.
+- En ese momento se había probado MCL con `/odom` en Gazebo; el 2026-06-29 se
+  corrigió para cumplir la consigna: TB3 simulado usa `/calc_odom`.
 - Corregida la deteccion de obstaculos dinamicos: ahora solo marca obstaculos
   nuevos sobre celdas que el mapa conoce como libres. Las celdas desconocidas
   del mapa ya no generan falsos positivos de evasion/replanificacion.

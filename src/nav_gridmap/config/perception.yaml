@@ -1,0 +1,36 @@
+# ===========================================================================
+# Parametros Parte C: mision de deteccion de conos rojos.
+# El nodo puede usarse con rosbags o robot real. Ajustar los topicos de camara
+# segun lo que publique el TurtleBot4/rosbag de la catedra.
+# ===========================================================================
+
+red_cone_mission:
+  ros__parameters:
+    use_sim_time: false
+    robot_type: "tb4"
+
+    # Camara RGB y profundidad. Si no hay depth, estima distancia por tamano.
+    image_topic: "/tb4_0/color/image"
+    depth_topic: ""
+    camera_info_topic: ""
+    camera_frame: ""                # vacio -> usa header.frame_id de la imagen
+    target_frame: "map"
+
+    # Seguridad: por defecto NO manda /goal_pose automaticamente. Para la demo
+    # final, activar auto_goal:=true cuando la localizacion ya este estable.
+    auto_goal: false
+    goal_topic: "/goal_pose"
+    stable_detections: 3
+    cooldown: 5.0
+    goal_offset_m: 0.35             # frena antes del cono para no embestirlo
+
+    # Fallback si no hay profundidad.
+    fallback_distance_m: 1.2
+    cone_height_m: 0.30
+
+    # Segmentacion de color rojo.
+    min_area: 120
+    red_min: 70
+    saturation_min: 0.35
+    value_min: 0.12
+    tf_timeout: 0.2

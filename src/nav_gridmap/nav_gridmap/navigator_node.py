@@ -66,7 +66,7 @@ def yaw_to_quat_zw(yaw):
 
 ROBOT_PROFILES = {
     "tb3": {"scan_topic": "/scan", "cmd_vel_topic": "/cmd_vel",
-            "base_frame": "base_footprint"},
+            "base_frame": "calc_base_footprint"},
     "tb4": {"scan_topic": "/tb4_0/scan", "cmd_vel_topic": "/cmd_vel",
             "base_frame": "base_link"},
 }
@@ -104,6 +104,7 @@ class NavigatorNode(Node):
         self.declare_parameter("dynamic_inflate_cells", 3)  # inflado extra de obstaculos nuevos
         self.declare_parameter("replan_cooldown", 1.0)    # s entre re-planificaciones
         self.declare_parameter("wall_tol", 0.20)
+        self.declare_parameter("obstacle_confirmations", 2)
         self.declare_parameter("clear_dynamic_on_new_goal", True)
 
         # --- recuperacion ante atasco ---
@@ -154,6 +155,7 @@ class NavigatorNode(Node):
         self.dynamic_inflate_cells = int(gp("dynamic_inflate_cells").value)
         self.replan_cooldown = float(gp("replan_cooldown").value)
         self.wall_tol = float(gp("wall_tol").value)
+        self.obstacle_confirmations = max(1, int(gp("obstacle_confirmations").value))
         self.clear_dynamic_on_new_goal = bool(gp("clear_dynamic_on_new_goal").value)
         self.max_range_param = float(gp("max_range").value)
         self.tf_timeout = float(gp("tf_timeout").value)
@@ -177,6 +179,7 @@ class NavigatorNode(Node):
         self._last_progress_time = 0.0
         self._recovery_until = 0.0
         self._recoveries = 0
+        self._obstacle_streak = 0
 
         # --- TF ---
         self.tf_buffer = tf2_ros.Buffer()
@@ -208,6 +211,7 @@ class NavigatorNode(Node):
         self.goal = (x, y, yaw)
         self._reached_logged = False
         self._recoveries = 0
+        self._obstacle_streak = 0
         if self.clear_dynamic_on_new_goal:
             self.dynamic_cells.clear()
         self.state = 'PLANNING'           # nuevo goal -> (re)planificar siempre
@@ -310,6 +314,7 @@ class NavigatorNode(Node):
             if info['front_dist'] < self.stop_distance:
                 self._stop()
                 self._register_obstacle(info['cells'], now)
+                self._obstacle_streak = 0
                 if (now - self._last_replan) >= self.replan_cooldown:
                     self.get_logger().info(
                         f"Obstaculo a {info['front_dist']:.2f} m al frente. "
@@ -317,14 +322,24 @@ class NavigatorNode(Node):
                     self.state = 'PLANNING'
                 return
             # obstaculo nuevo cerca (no de emergencia): marcar y, si toca el
-            # camino, re-planificar suavemente
+            # camino varias veces seguidas, re-planificar suavemente. La
+            # confirmacion evita que pequenas diferencias mapa/LIDAR se acumulen
+            # como obstaculos falsos en paredes conocidas.
             if info['cells'] and info['min_dist'] < (self.stop_distance + 0.6):
-                self._register_obstacle(info['cells'], now)
-                if (self._path_hits_dynamic()
-                        and (now - self._last_replan) >= self.replan_cooldown):
-                    self.get_logger().info("Obstaculo sobre la ruta. Re-planificando...")
-                    self.state = 'PLANNING'
-                    return
+                if self._path_hits_cells(info['cells']):
+                    self._obstacle_streak += 1
+                    if (self._obstacle_streak >= self.obstacle_confirmations
+                            and (now - self._last_replan) >= self.replan_cooldown):
+                        self._register_obstacle(info['cells'], now)
+                        self._obstacle_streak = 0
+                        self.get_logger().info(
+                            "Obstaculo sobre la ruta confirmado. Re-planificando...")
+                        self.state = 'PLANNING'
+                        return
+                else:
+                    self._obstacle_streak = 0
+            else:
+                self._obstacle_streak = 0
 
         # --- seguimiento normal ---
         v, w, status = self.controller.compute(pose, self.dt)
@@ -418,13 +433,18 @@ class NavigatorNode(Node):
     def _path_hits_dynamic(self):
         """True si algun waypoint del camino actual cae cerca de un obstaculo
         dinamico marcado."""
-        if self.controller.path is None or not self.dynamic_cells:
+        return self._path_hits_cells(self.dynamic_cells.keys())
+
+    def _path_hits_cells(self, cells):
+        """True si algun waypoint del camino actual cae cerca de las celdas."""
+        cells = list(cells)
+        if self.controller.path is None or not cells:
             return False
         res = self.smap.resolution
         for (px, py) in self.controller.path:
             i = int((px - self.smap.origin_x) / res)
             j = int((py - self.smap.origin_y) / res)
-            for (ci, cj) in self.dynamic_cells:
+            for (ci, cj) in cells:
                 if abs(ci - i) <= 3 and abs(cj - j) <= 3:
                     return True
         return False

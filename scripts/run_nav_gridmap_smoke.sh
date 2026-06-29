@@ -24,7 +24,7 @@ cleanup() {
 echo "[1/6] Limpiando procesos previos"
 pkill -INT -x gzserver 2>/dev/null || true
 pkill -INT -x gzclient 2>/dev/null || true
-pkill -INT -f "nav_gridmap" 2>/dev/null || true
+pkill -INT -f "mcl_localization|navigator|rviz2_navigation" 2>/dev/null || true
 pkill -INT -f "spawn_entity.py" 2>/dev/null || true
 sleep 4
 
@@ -39,8 +39,8 @@ if ! timeout 8 ros2 topic echo /scan --once >/tmp/${RUN}_scan.txt 2>&1; then
   cleanup
   exit 2
 fi
-if ! timeout 8 ros2 topic echo /odom --once >/tmp/${RUN}_odom.txt 2>&1; then
-  echo "ERROR: no hay /odom"
+if ! timeout 8 ros2 topic echo /calc_odom --once >/tmp/${RUN}_odom.txt 2>&1; then
+  echo "ERROR: no hay /calc_odom"
   cat /tmp/${RUN}_odom.txt
   cleanup
   exit 3
@@ -74,8 +74,12 @@ if [ $? -eq 0 ]; then
   grep -E 'frame_id|poses:' /tmp/${RUN}_plan.txt | head -20 || true
   echo "PLAN_OK"
 else
-  echo "PLAN_MISSING"
-  cat /tmp/${RUN}_plan.txt
+  if grep -q "Camino planificado" "${LOG}_nav.log"; then
+    echo "PLAN_OK_LOG"
+  else
+    echo "PLAN_MISSING"
+    cat /tmp/${RUN}_plan.txt
+  fi
 fi
 echo "--- cmd_vel ---"
 timeout 5 ros2 topic echo /cmd_vel --once || true

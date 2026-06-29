@@ -8,14 +8,16 @@ aparte). Este nodo:
   - carga el MAPA ESTATICO de la Parte A (mapa_fastslam_final_v2) y lo publica
     en /map (latched) para que RViz lo muestre,
   - escucha /initialpose (boton "2D Pose Estimate" de RViz) para sembrar la nube,
-  - escucha /scan (LIDAR) y /odom (odometria de Gazebo en TB3),
+  - escucha /scan (LIDAR) y la odometria del perfil seleccionado
+    (TB3 simulado: /calc_odom, TB4 real: /odom),
   - corre un paso de MCL cuando el robot se movio lo suficiente (keyframe),
   - publica la pose estimada /amcl_pose, la nube /particlecloud y, lo mas
     importante, el TF map->odom (la correccion que usaran el planner y el control).
 
 Entradas (topicos)
   /scan        sensor_msgs/LaserScan               -> rayos del LIDAR
-  /odom        nav_msgs/Odometry                   -> odometria del robot
+  /calc_odom   nav_msgs/Odometry                   -> odometria TB3 simulado
+  /odom        nav_msgs/Odometry                   -> odometria TB4 real
   /initialpose geometry_msgs/PoseWithCovarianceStamped -> pose inicial (RViz)
 
 Salidas (topicos)
@@ -68,7 +70,8 @@ def yaw_from_quat(q):
 ROBOT_PROFILES = {
     "tb3": {
         "scan_topic": "/scan",
-        "odom_topic": "/odom",
+        "odom_topic": "/calc_odom",
+        "odom_frame": "calc_odom",
         "odom_qos": "reliable",
         "lidar_angle_offset": 0.0,
         "discard_zero_intensity": False,
@@ -76,6 +79,7 @@ ROBOT_PROFILES = {
     "tb4": {
         "scan_topic": "/tb4_0/scan",
         "odom_topic": "/odom",
+        "odom_frame": "odom",
         "odom_qos": "best_effort",
         "lidar_angle_offset": 0.0,
         "discard_zero_intensity": True,
@@ -119,7 +123,7 @@ class MclNode(Node):
         self.declare_parameter("sensor_offset_y", 0.0)
         # frames y topicos (defaults del perfil)
         self.declare_parameter("map_frame", "map")
-        self.declare_parameter("odom_frame", "odom")
+        self.declare_parameter("odom_frame", prof["odom_frame"])
         self.declare_parameter("scan_topic", prof["scan_topic"])
         self.declare_parameter("odom_topic", prof["odom_topic"])
         self.declare_parameter("odom_qos", prof["odom_qos"])

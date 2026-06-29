@@ -27,6 +27,7 @@ from launch import LaunchDescription
 from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
+from launch_ros.actions import Node
 
 
 def generate_launch_description():
@@ -65,4 +66,19 @@ def generate_launch_description():
         launch_arguments={'use_sim_time': use_sim_time}.items()
     )
 
-    return LaunchDescription([gzserver, spawn_robot, robot_state_publisher])
+    calc_odom = Node(
+        package='turtlebot3_custom_simulation',
+        executable='turtlebot3_custom_simulation',
+        name='turtlebot3_custom_simulation',
+        output='screen',
+        parameters=[{
+            'use_sim_time': True,
+            'odom_frame': 'calc_odom',
+            'base_frame': 'calc_base_footprint',
+            'joint_states_frame': 'base_footprint',
+            'wheels.separation': 0.160,
+            'wheels.radius': 0.033,
+        }]
+    )
+
+    return LaunchDescription([gzserver, spawn_robot, robot_state_publisher, calc_odom])

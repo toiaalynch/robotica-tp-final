@@ -26,7 +26,10 @@ mcl_localization:
     keyframe_dist: 0.10
     keyframe_angle: 0.10
     map_frame: "map"
-    odom_frame: "odom"
+    # odom_frame lo define robot_type:
+    #   tb3 sim -> calc_odom
+    #   tb4 real -> odom
+    # odom_frame: "calc_odom"
     transform_tolerance: 0.1
     publish_map: true
 
@@ -55,8 +58,9 @@ navigator:
     obstacle_check_period: 0.2      # cada cuanto revisar el LIDAR [s]
     dynamic_ttl: 4.0                # vida de un obstaculo dinamico marcado [s]
     dynamic_inflate_cells: 1        # margen extra alrededor de obstaculos nuevos
-    replan_cooldown: 1.0            # tiempo minimo entre re-planificaciones [s]
-    wall_tol: 0.30                  # margen para no confundir pared con obstaculo [m]
+    replan_cooldown: 2.0            # tiempo minimo entre re-planificaciones [s]
+    wall_tol: 0.55                  # margen para no confundir pared con obstaculo [m]
+    obstacle_confirmations: 3       # detecciones seguidas antes de replan no urgente
     clear_dynamic_on_new_goal: true # cada goal releva de nuevo los obstaculos
 
     # --- recuperacion ante atasco ---
@@ -69,6 +73,9 @@ navigator:
     # --- general ---
     control_rate: 20.0              # Hz del bucle de control
     map_frame: "map"
-    base_frame: "base_footprint"    # tb4: base_link
+    # base_frame lo define robot_type:
+    #   tb3 sim -> calc_base_footprint
+    #   tb4 real -> base_link
+    # base_frame: "calc_base_footprint"
     max_range: 0.0
     tf_timeout: 0.2

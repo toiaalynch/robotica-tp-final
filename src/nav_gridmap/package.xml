@@ -4,10 +4,12 @@
   <name>nav_gridmap</name>
   <version>0.1.0</version>
   <description>
-    Parte B del TP Final (I-402): Navegacion Autonoma sobre grilla pura
+    Partes B/C del TP Final (I-402): Navegacion Autonoma sobre grilla pura
     (Sistema 1). Localizacion por Monte Carlo (MCL) contra el mapa estatico
     de la Parte A, planificacion de ruta, seguimiento de trayectoria y
-    maquina de estados. Reutiliza los modulos matematicos de slam_gridmap.
+    maquina de estados. Incluye un modulo inicial de percepcion para detectar
+    conos rojos y publicar goals navegables. Reutiliza los modulos matematicos
+    de slam_gridmap.
     Probado con TurtleBot3 en Gazebo (ROS 2 Humble).
   </description>
   <maintainer email="vlynch@udesa.edu.ar">Toia</maintainer>

@@ -13,9 +13,14 @@ El paquete se construye **por componentes**. Estado actual:
 | **Seguimiento (pure pursuit)** | 🟩 Listo | `controller.py` |
 | **Evasión de obstáculos** | 🟩 Listo | `obstacle.py` |
 | **Máquina de estados** | 🟩 Listo | `navigator_node.py` |
+| **Percepción Parte C (conos rojos)** | 🟨 Inicial | `red_cone_vision.py`, `red_cone_mission_node.py` |
 
 > Reutiliza por dependencia los módulos matemáticos de la Parte A
 > (`motion_model`, `likelihood_field`, `resampling`), sin duplicar código.
+
+Para el simulador TurtleBot3 se usa la odometría calculada de la cátedra
+(`/calc_odom`) y su TF `calc_odom -> calc_base_footprint`. Para el TurtleBot4
+real el perfil cambia a `/odom` con QoS `best_effort`.
 
 ### Mapa usado en Parte B
 
@@ -77,7 +82,7 @@ ante obstáculos no mapeados o un nuevo goal. El estado se publica en `/nav_stat
 |---|---|---|
 | sub | `/goal_pose` | `geometry_msgs/PoseStamped` (2D Goal Pose) |
 | sub | `/scan` | `sensor_msgs/LaserScan` |
-| sub (TF) | `map → base_footprint` | pose del robot (la da MCL) |
+| sub (TF) | `map → calc_base_footprint` (TB3 sim) / `map → base_link` (TB4) | pose del robot (la da MCL) |
 | pub | `/cmd_vel` | `geometry_msgs/Twist` |
 | pub | `/plan` | `nav_msgs/Path` |
 | pub | `/nav_state` | `std_msgs/String` |
@@ -103,12 +108,12 @@ pose inicial, deriva), reinyecta partículas para **re-localizarse**.
 | Dirección | Tópico | Tipo |
 |---|---|---|
 | sub | `/scan` | `sensor_msgs/LaserScan` |
-| sub | `/odom` | `nav_msgs/Odometry` |
+| sub | `/calc_odom` (TB3 sim) / `/odom` (TB4 real) | `nav_msgs/Odometry` |
 | sub | `/initialpose` | `geometry_msgs/PoseWithCovarianceStamped` |
 | pub | `/map` | `nav_msgs/OccupancyGrid` (latched) |
 | pub | `/amcl_pose` | `geometry_msgs/PoseWithCovarianceStamped` |
 | pub | `/particlecloud` | `geometry_msgs/PoseArray` |
-| TF | `map → odom` | corrección de la localización |
+| TF | `map → calc_odom` (TB3 sim) / `map → odom` (TB4) | corrección de la localización |
 
 ### Cómo correrlo
 
@@ -150,3 +155,35 @@ python3 -m pytest src/nav_gridmap/test -v
 ```
 
 Verifica, sobre un mapa sintético, que el filtro converge a la pose verdadera.
+
+---
+
+## Parte C — Detección de Conos Rojos
+
+Primer módulo de percepción para la misión activa del robot real. El nodo
+`red_cone_mission` segmenta conos rojos en la imagen, estima su posición en el
+frame `map` usando profundidad/cámara/TF, y publica un goal para que el
+planificador llegue por una ruta válida. Esto evita el error de intentar ir en
+línea recta a través de paredes caladas o huecos.
+
+Por seguridad, por defecto **no manda** `/goal_pose` automáticamente; publica
+solo `/red_cone/goal_pose` y `/red_cone/status` para inspección. Para activar la
+misión completa:
+
+```bash
+ros2 launch nav_gridmap red_cone_mission.launch.py \
+  image_topic:=/TOPICO/DE/CAMARA \
+  depth_topic:=/TOPICO/DE/DEPTH \
+  camera_info_topic:=/TOPICO/CAMERA_INFO \
+  auto_goal:=true
+```
+
+Con rosbag, primero revisar los tópicos disponibles:
+
+```bash
+ros2 bag info /ruta/al/rosbag
+```
+
+Si el bag no trae depth, el nodo usa una estimación aproximada por tamaño del
+cono (`cone_height_m` y `fallback_distance_m`). Esa modalidad alcanza para
+validar segmentación, pero la navegación final es más robusta con depth.

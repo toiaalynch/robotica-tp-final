@@ -82,8 +82,8 @@ ROBOT_PROFILES = {
         "discard_zero_intensity": False,
     },
     "tb4": {
-        "scan_topic": "/tb4_0/scan",
-        "odom_topic": "/odom",
+        "scan_topic": "/tb4_0/scan",     # el TB4 real publica TODO bajo /tb4_0/
+        "odom_topic": "/tb4_0/odom",     # odom tambien va namespaceado (no /odom)
         "gt_odom_topic": "",             # robot real: no hay ground truth
         "odom_qos": "best_effort",
         "lidar_angle_offset": 0.0,       # AJUSTAR con la rotacion real del LIDAR tb4

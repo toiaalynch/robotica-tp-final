@@ -5,7 +5,10 @@
 # ===========================================================================
 grid_fastslam:
   ros__parameters:
-    use_sim_time: true              # OBLIGATORIO con Gazebo (usa el reloj de la sim)
+    use_sim_time: true              # default para Gazebo. NO hace falta tocarlo:
+                                    # el launch lo pone solo (true en tb3, false en
+                                    # tb4 real). Solo manda si lanzas el nodo con
+                                    # 'ros2 run' en vez del launch.
 
     # --- Robot (portabilidad TB3 simulado / TB4 real) ---
     # Con este UNICO parametro se ajustan topicos, QoS y particularidades del

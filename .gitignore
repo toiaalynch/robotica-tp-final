@@ -20,12 +20,18 @@ maps/
 !src/slam_gridmap/maps/mapa_fastslam_final_v2.pgm
 !src/slam_gridmap/maps/mapa_fastslam_final_v2.yaml
 !src/slam_gridmap/maps/mapa_fastslam_final_v2.png
+!src/slam_gridmap/maps/mapa_fastslam_horizontal_sofa.pgm
+!src/slam_gridmap/maps/mapa_fastslam_horizontal_sofa.yaml
+!src/slam_gridmap/maps/mapa_fastslam_horizontal_sofa.png
 
 # --- Copia del mapa que usa el paquete de navegacion (Parte B) ---
 # Necesaria para que el launch la instale y la encuentre tras clonar.
 !src/nav_gridmap/maps/
 !src/nav_gridmap/maps/mapa_fastslam_final_v2.pgm
 !src/nav_gridmap/maps/mapa_fastslam_final_v2.yaml
+!src/nav_gridmap/maps/mapa_fastslam_horizontal_sofa_nav.pgm
+!src/nav_gridmap/maps/mapa_fastslam_horizontal_sofa_nav.yaml
+!src/nav_gridmap/maps/mapa_fastslam_horizontal_sofa_nav.png
 
 # --- macOS ---
 .DS_Store

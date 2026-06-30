@@ -29,17 +29,27 @@ grid_fastslam:
     map_resolution: 0.05            # 5 cm por celda
     map_origin_x: -8.0              # esquina inferior-izquierda del mapa [m]
     map_origin_y: -8.0
-    p_occ: 0.70                     # modelo inverso: prob. de ocupado
-    p_free: 0.35                    # modelo inverso: prob. de libre
+    p_occ: 0.75                     # modelo inverso: ocupado mas "pegajoso"
+    p_free: 0.45                    # libre conservador: no borra paredes tan fuerte
     occ_threshold: 0.65            # prob. desde la cual una celda es "pared"
 
     # --- LIDAR y keyframes (clave para correr en tiempo real) ---
     scan_subsample: 4               # usar 1 de cada 4 rayos
     max_range: 0.0                  # 0 -> usa el range_max del propio LaserScan
     keyframe_dist: 0.10             # correr un paso de SLAM cada 10 cm...
-    keyframe_angle: 0.10            # ...o cada ~6 grados de giro
+    keyframe_angle: 0.20            # ...o cada ~11 grados de giro
     sensor_offset_x: 0.0            # offset del LIDAR respecto del centro del robot
     sensor_offset_y: 0.0
+
+    # --- Actualizacion robusta del mapa ---
+    # En giros puros, el LIDAR ve 360 grados pero la pose puede tener pequenos
+    # errores de yaw. Por eso bajamos/quitamos el aporte de "libre" durante
+    # giros, para que no despinte paredes ya vistas.
+    hit_free_margin_m: 0.08
+    occ_update_radius_cells: 0
+    rotation_translation_threshold_m: 0.03
+    rotation_free_update_scale: 0.05
+    rotation_occ_update_scale: 0.4
 
     # --- Frames ---
     map_frame: "map"

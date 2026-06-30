@@ -85,13 +85,17 @@ class GridFastSLAM:
     # ranges, angles : escaneo YA submuestreado y limpio (sin inf/nan).
     # sensor_offset  : (dx, dy) del LIDAR respecto del centro del robot (base).
     # ------------------------------------------------------------------
-    def update(self, ranges, angles, max_range, sensor_offset=(0.0, 0.0)):
+    def update(self, ranges, angles, max_range, sensor_offset=(0.0, 0.0),
+               map_update_options=None):
         sensor_poses = self._sensor_poses(sensor_offset)
+        map_update_options = map_update_options or {}
 
         # --- Primer escaneo: no hay mapa todavia, solo inicializamos ---
         if not self.map_initialized:
             for k in range(self.N):
-                self.grids[k].integrate_scan(sensor_poses[k], ranges, angles, max_range)
+                self.grids[k].integrate_scan(
+                    sensor_poses[k], ranges, angles, max_range,
+                    **map_update_options)
             self.map_initialized = True
             self._best_pose = self.poses[0].copy()
             self._best_grid = self.grids[0]
@@ -115,7 +119,9 @@ class GridFastSLAM:
 
         # --- 3) MAPEO: integrar el escaneo al mapa de cada particula ---
         for k in range(self.N):
-            self.grids[k].integrate_scan(sensor_poses[k], ranges, angles, max_range)
+            self.grids[k].integrate_scan(
+                sensor_poses[k], ranges, angles, max_range,
+                **map_update_options)
 
         # --- Foto de la mejor particula AHORA (antes de resamplear) ---
         best = int(np.argmax(self.weights))

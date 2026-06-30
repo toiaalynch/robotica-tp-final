@@ -27,9 +27,9 @@ mcl_localization:
     keyframe_angle: 0.10
     map_frame: "map"
     # odom_frame lo define robot_type:
-    #   tb3 sim -> calc_odom
+    #   tb3 sim -> odom
     #   tb4 real -> odom
-    # odom_frame: "calc_odom"
+    # odom_frame: "odom"
     transform_tolerance: 0.1
     publish_map: true
 
@@ -74,8 +74,8 @@ navigator:
     control_rate: 20.0              # Hz del bucle de control
     map_frame: "map"
     # base_frame lo define robot_type:
-    #   tb3 sim -> calc_base_footprint
+    #   tb3 sim -> base_footprint
     #   tb4 real -> base_link
-    # base_frame: "calc_base_footprint"
+    # base_frame: "base_footprint"
     max_range: 0.0
     tf_timeout: 0.2

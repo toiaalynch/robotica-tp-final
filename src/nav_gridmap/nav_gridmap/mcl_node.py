@@ -16,8 +16,7 @@ aparte). Este nodo:
 
 Entradas (topicos)
   /scan        sensor_msgs/LaserScan               -> rayos del LIDAR
-  /calc_odom   nav_msgs/Odometry                   -> odometria TB3 simulado
-  /odom        nav_msgs/Odometry                   -> odometria TB4 real
+  /odom        nav_msgs/Odometry                   -> odometria TB3 sim / TB4 real
   /initialpose geometry_msgs/PoseWithCovarianceStamped -> pose inicial (RViz)
 
 Salidas (topicos)
@@ -70,8 +69,8 @@ def yaw_from_quat(q):
 ROBOT_PROFILES = {
     "tb3": {
         "scan_topic": "/scan",
-        "odom_topic": "/calc_odom",
-        "odom_frame": "calc_odom",
+        "odom_topic": "/odom",
+        "odom_frame": "odom",
         "odom_qos": "reliable",
         "lidar_angle_offset": 0.0,
         "discard_zero_intensity": False,

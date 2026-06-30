@@ -114,33 +114,62 @@ class OccupancyGrid2D:
     # pose  = (x, y, theta) del SENSOR en el mundo.
     # ranges, angles = arrays del LaserScan ya filtrados (sin inf/nan).
     # ------------------------------------------------------------------
-    def integrate_scan(self, pose, ranges, angles, max_range):
+    def integrate_scan(self, pose, ranges, angles, max_range,
+                       hit_free_margin_m=0.0,
+                       occ_update_radius_cells=0,
+                       free_update_scale=1.0,
+                       occ_update_scale=1.0):
         x, y, theta = pose
         i0, j0 = self.world_to_map(x, y)   # celda del robot (origen de los rayos)
+        hit_free_margin_m = max(0.0, float(hit_free_margin_m))
+        occ_update_radius_cells = max(0, int(occ_update_radius_cells))
+        free_update = self.L_FREE * max(0.0, float(free_update_scale))
+        occ_update = self.L_OCC * max(0.0, float(occ_update_scale))
 
         cos_t, sin_t = np.cos(theta), np.sin(theta)
         for r, a in zip(ranges, angles):
             hit = r < max_range            # False -> el rayo no choco (alcance maximo)
             r_use = min(r, max_range)
+            # Si hubo hit, no marcamos como libre hasta la celda pegada al
+            # obstaculo. Ese margen evita que rangos apenas ruidosos "borren"
+            # paredes ya observadas.
+            free_r = max(0.0, r_use - hit_free_margin_m) if hit else r_use
             # punto final del rayo en el mundo
-            ex = x + r_use * (cos_t * np.cos(a) - sin_t * np.sin(a))
-            ey = y + r_use * (sin_t * np.cos(a) + cos_t * np.sin(a))
+            ca = cos_t * np.cos(a) - sin_t * np.sin(a)
+            sa = sin_t * np.cos(a) + cos_t * np.sin(a)
+            ex = x + r_use * ca
+            ey = y + r_use * sa
+            fx = x + free_r * ca
+            fy = y + free_r * sa
             i1, j1 = self.world_to_map(ex, ey)
+            fi, fj = self.world_to_map(fx, fy)
 
             # 1) celdas LIBRES: todas las que el rayo atraviesa (Bresenham)
-            for (ci, cj) in self._bresenham(i0, j0, i1, j1):
-                if self.in_bounds(ci, cj):
-                    self.log_odds[cj, ci] = np.clip(
-                        self.log_odds[cj, ci] + self.L_FREE,
-                        -self.L_CLAMP, self.L_CLAMP)
+            if free_update != 0.0:
+                for (ci, cj) in self._bresenham(i0, j0, fi, fj):
+                    self._add_logodds(ci, cj, free_update)
 
             # 2) celda OCUPADA: solo el extremo, y solo si el rayo realmente choco
-            if hit and self.in_bounds(i1, j1):
-                self.log_odds[j1, i1] = np.clip(
-                    self.log_odds[j1, i1] + self.L_OCC,
-                    -self.L_CLAMP, self.L_CLAMP)
+            if hit and occ_update != 0.0:
+                self._mark_occupied(i1, j1, occ_update, occ_update_radius_cells)
 
         self._lf_dirty = True          # el mapa cambio -> hay que recalcular el LF
+
+    def _add_logodds(self, i, j, delta):
+        if self.in_bounds(i, j):
+            self.log_odds[j, i] = np.clip(
+                self.log_odds[j, i] + delta,
+                -self.L_CLAMP, self.L_CLAMP)
+
+    def _mark_occupied(self, i, j, delta, radius):
+        if radius <= 0:
+            self._add_logodds(i, j, delta)
+            return
+        r2 = radius * radius
+        for dj in range(-radius, radius + 1):
+            for di in range(-radius, radius + 1):
+                if di * di + dj * dj <= r2:
+                    self._add_logodds(i + di, j + dj, delta)
 
     # ------------------------------------------------------------------
     # Likelihood field: para cada celda, distancia (en metros) a la pared

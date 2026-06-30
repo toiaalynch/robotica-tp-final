@@ -66,7 +66,7 @@ def yaw_to_quat_zw(yaw):
 
 ROBOT_PROFILES = {
     "tb3": {"scan_topic": "/scan", "cmd_vel_topic": "/cmd_vel",
-            "base_frame": "calc_base_footprint"},
+            "base_frame": "base_footprint"},
     "tb4": {"scan_topic": "/tb4_0/scan", "cmd_vel_topic": "/cmd_vel",
             "base_frame": "base_link"},
 }

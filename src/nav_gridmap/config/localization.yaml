@@ -45,14 +45,14 @@ mcl_localization:
     # --- Frames ---
     map_frame: "map"
     # odom_frame lo define robot_type:
-    #   tb3 sim -> calc_odom
+    #   tb3 sim -> odom
     #   tb4 real -> odom
-    # odom_frame: "calc_odom"
+    # odom_frame: "odom"
     transform_tolerance: 0.1        # margen del TF map->odom [s]
 
     # --- Topicos / QoS / fisica del LIDAR (los define robot_type; descomenta para forzar) ---
     # scan_topic: "/scan"
-    # odom_topic: "/calc_odom"       # TB3 simulado; TB4 real usa /odom
+    # odom_topic: "/odom"            # TB3 simulado y TB4 real
     # odom_qos: "reliable"
     # lidar_angle_offset: 0.0
     # discard_zero_intensity: false

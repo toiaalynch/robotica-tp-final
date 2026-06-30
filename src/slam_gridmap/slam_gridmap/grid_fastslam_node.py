@@ -120,16 +120,23 @@ class GridFastSlamNode(Node):
         self.declare_parameter("map_resolution", 0.05)
         self.declare_parameter("map_origin_x", -8.0)
         self.declare_parameter("map_origin_y", -8.0)
-        self.declare_parameter("p_occ", 0.70)
-        self.declare_parameter("p_free", 0.35)
+        self.declare_parameter("p_occ", 0.75)
+        self.declare_parameter("p_free", 0.45)
         self.declare_parameter("occ_threshold", 0.65)
         # LIDAR / keyframes
         self.declare_parameter("scan_subsample", 4)      # usar 1 de cada k rayos
         self.declare_parameter("max_range", 0.0)         # 0 -> usar range_max del scan
         self.declare_parameter("keyframe_dist", 0.10)    # m para disparar update
-        self.declare_parameter("keyframe_angle", 0.10)   # rad para disparar update
+        self.declare_parameter("keyframe_angle", 0.20)   # rad para disparar update
         self.declare_parameter("sensor_offset_x", 0.0)   # LIDAR respecto de base
         self.declare_parameter("sensor_offset_y", 0.0)
+        # Actualizacion robusta del mapa: evita que giros puros borren paredes
+        # ya vistas por rayos libres levemente desalineados.
+        self.declare_parameter("hit_free_margin_m", 0.08)
+        self.declare_parameter("occ_update_radius_cells", 0)
+        self.declare_parameter("rotation_translation_threshold_m", 0.03)
+        self.declare_parameter("rotation_free_update_scale", 0.05)
+        self.declare_parameter("rotation_occ_update_scale", 0.4)
         # frames y topicos (los defaults dependen del robot_type via 'prof')
         self.declare_parameter("map_frame", "map")
         self.declare_parameter("odom_frame", "odom")
@@ -153,11 +160,23 @@ class GridFastSlamNode(Node):
         self.kf_angle = float(gp("keyframe_angle").value)
         self.sensor_offset = (float(gp("sensor_offset_x").value),
                               float(gp("sensor_offset_y").value))
+        self.hit_free_margin_m = float(gp("hit_free_margin_m").value)
+        self.occ_update_radius_cells = int(gp("occ_update_radius_cells").value)
+        self.rotation_translation_threshold_m = float(
+            gp("rotation_translation_threshold_m").value)
+        self.rotation_free_update_scale = float(gp("rotation_free_update_scale").value)
+        self.rotation_occ_update_scale = float(gp("rotation_occ_update_scale").value)
         self.lidar_angle_offset = float(gp("lidar_angle_offset").value)
         self.discard_zero_intensity = bool(gp("discard_zero_intensity").value)
         self.map_frame = gp("map_frame").value
         self.odom_frame = gp("odom_frame").value
         self.publish_lf = bool(gp("publish_likelihoodfield").value)
+        self.base_map_update_options = {
+            "hit_free_margin_m": self.hit_free_margin_m,
+            "occ_update_radius_cells": self.occ_update_radius_cells,
+            "free_update_scale": 1.0,
+            "occ_update_scale": 1.0,
+        }
 
         map_args = dict(
             width_m=float(gp("map_width_m").value),
@@ -305,17 +324,21 @@ class GridFastSlamNode(Node):
         # --- primer escaneo: fijar referencia y mapear sin mover ---
         if self.last_odom is None:
             self.last_odom = self.cur_odom
-            self.slam.update(ranges, angles, max_range, self.sensor_offset)
+            self.slam.update(
+                ranges, angles, max_range, self.sensor_offset,
+                map_update_options=self._map_update_options(dt=0.0, dtheta=0.0))
             return
 
         # --- ¿se movio lo suficiente como para procesar un keyframe? ---
-        dr1, dt, dr2, moved = self._delta(self.last_odom, self.cur_odom)
+        dr1, dt, dr2, dtheta, moved = self._delta(self.last_odom, self.cur_odom)
         if not moved:
             return
 
         # --- PASO DE SLAM: predecir con el delta, corregir con el scan ---
         self.slam.predict(dr1, dt, dr2)
-        self.slam.update(ranges, angles, max_range, self.sensor_offset)
+        self.slam.update(
+            ranges, angles, max_range, self.sensor_offset,
+            map_update_options=self._map_update_options(dt=dt, dtheta=dtheta))
         self.last_odom = self.cur_odom
 
         # --- publicar resultados ---
@@ -336,8 +359,19 @@ class GridFastSlamNode(Node):
         else:
             dr1 = 0.0
             dr2 = normalize_angle(th1 - th0)
-        moved = (dt > self.kf_dist) or (abs(normalize_angle(th1 - th0)) > self.kf_angle)
-        return dr1, dt, dr2, moved
+        dtheta = normalize_angle(th1 - th0)
+        moved = (dt > self.kf_dist) or (abs(dtheta) > self.kf_angle)
+        return dr1, dt, dr2, dtheta, moved
+
+    def _map_update_options(self, dt, dtheta):
+        opts = dict(self.base_map_update_options)
+        almost_pure_rotation = (
+            dt <= self.rotation_translation_threshold_m
+            and abs(dtheta) >= self.kf_angle)
+        if almost_pure_rotation:
+            opts["free_update_scale"] *= self.rotation_free_update_scale
+            opts["occ_update_scale"] *= self.rotation_occ_update_scale
+        return opts
 
     # ==================================================================
     # Publicar pose corregida (/belief), nube de particulas y trayectoria.
@@ -483,7 +517,7 @@ class GridFastSlamNode(Node):
             f.write(f"image: {os.path.basename(pgm)}\n")
             f.write(f"resolution: {grid.resolution}\n")
             f.write(f"origin: [{grid.origin_x}, {grid.origin_y}, 0.0]\n")
-            f.write("negate: 0\noccupied_thresh: 0.65\nfree_thresh: 0.25\n")
+            f.write("negate: 0\noccupied_thresh: 0.65\nfree_thresh: 0.196\n")
         self.get_logger().info(f"Mapa guardado en {pgm} (+ .yaml)")
 
         # PNG presentable para el informe (solo en el guardado final, no en el

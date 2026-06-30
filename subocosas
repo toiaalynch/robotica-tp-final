@@ -1,0 +1,9 @@
+ros2 run slam_gridmap grid_fastslam --ros-args \
+  --params-file install/slam_gridmap/share/slam_gridmap/config/params.yaml \
+  -p use_sim_time:=false \
+  -p robot_type:=tb4 \
+  -p scan_topic:=/tb4_0/scan \
+  -p odom_topic:=/tb4_0/odom \
+  -p odom_qos:=best_effort \
+  -p map_save_path:=/home/usuario/maps/mapa_real \
+  -p autosave_period:=15.0

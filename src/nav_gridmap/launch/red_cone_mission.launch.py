@@ -34,6 +34,8 @@ def generate_launch_description():
         DeclareLaunchArgument('target_frame', default_value='map'),
         DeclareLaunchArgument('auto_goal', default_value='false'),
         DeclareLaunchArgument('use_sim_time', default_value='false'),
+        DeclareLaunchArgument('tf_timeout', default_value='0.5'),
+        DeclareLaunchArgument('tf_cache_time', default_value='60.0'),
 
         Node(
             package='nav_gridmap',
@@ -51,6 +53,8 @@ def generate_launch_description():
                     'target_frame': LaunchConfiguration('target_frame'),
                     'auto_goal': LaunchConfiguration('auto_goal'),
                     'use_sim_time': LaunchConfiguration('use_sim_time'),
+                    'tf_timeout': LaunchConfiguration('tf_timeout'),
+                    'tf_cache_time': LaunchConfiguration('tf_cache_time'),
                 },
             ],
         ),

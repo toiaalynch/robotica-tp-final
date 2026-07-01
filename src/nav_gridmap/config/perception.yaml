@@ -34,3 +34,4 @@ red_cone_mission:
     saturation_min: 0.35
     value_min: 0.12
     tf_timeout: 0.2
+    tf_cache_time: 60.0

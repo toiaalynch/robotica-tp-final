@@ -122,6 +122,7 @@ class RedConeMissionNode(Node):
         self.declare_parameter("saturation_min", 0.35)
         self.declare_parameter("value_min", 0.12)
         self.declare_parameter("tf_timeout", 0.2)
+        self.declare_parameter("tf_cache_time", 60.0)
 
         gp = self.get_parameter
         self.robot_type = gp("robot_type").value
@@ -138,6 +139,7 @@ class RedConeMissionNode(Node):
         self.fallback_distance_m = float(gp("fallback_distance_m").value)
         self.cone_height_m = float(gp("cone_height_m").value)
         self.tf_timeout = float(gp("tf_timeout").value)
+        self.tf_cache_time = float(gp("tf_cache_time").value)
 
         self.detector = RedConeDetector(
             min_area=int(gp("min_area").value),
@@ -151,7 +153,11 @@ class RedConeMissionNode(Node):
         self.stable_count = 0
         self.last_goal_time = -1e9
 
-        self.tf_buffer = tf2_ros.Buffer()
+        # Rosbags reproducidos rapido pueden entregar imagenes con retraso
+        # respecto de TF. Un buffer mas largo evita perder transformaciones
+        # validas cuando se valida la Parte C offline.
+        self.tf_buffer = tf2_ros.Buffer(
+            cache_time=Duration(seconds=self.tf_cache_time))
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
 
         self.create_subscription(Image, self.image_topic, self.image_cb,

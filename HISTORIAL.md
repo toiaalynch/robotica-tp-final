@@ -27,9 +27,9 @@ proyecto, actualizar este archivo:
 
 | Parte | Estado | Detalle |
 |---|---|---|
-| **A** — SLAM | 🟩 Implementada y verificada (falta probar en Gazebo real) | Paquete `slam_gridmap`: Grid-Based FastSLAM (Opción 1). |
+| **A** — SLAM | 🟩 Implementada y verificada con simulación y rosbag TB4 | Paquete `slam_gridmap`: Grid-Based FastSLAM (Opción 1). |
 | **B** — Navegación | 🟩 Implementada y verificada en Gazebo headless | Paquete `nav_gridmap` (Sistema 1, grilla pura). Localización MCL + planificación A* + seguimiento pure pursuit + evasión + máquina de estados. Tests offline OK y smoke test en Gazebo OK. |
-| **C** — Hardware real | 🟨 En progreso | Percepción de conos rojos inicial agregada; falta validar con rosbag/cámara real. |
+| **C** — Cono rojo | 🟩 Implementada y verificada con rosbag TB4 | Detector RGB de cono rojo, estimación de goal en `map` y publicación en `/red_cone/goal_pose`; falta la prueba final con robot real. |
 | Informe técnico (PDF) | ⬜ Pendiente | — |
 | Defensa (diapositivas) | ⬜ Pendiente | — |
 
@@ -41,6 +41,20 @@ FastSLAM)** por ser la de menor complejidad conceptual.
 ---
 
 ## Historial
+
+### 2026-07-01 — Alan — Parte C / rosbag de conos
+
+- Validada la deteccion de cono rojo con el rosbag `laberinto_conos`: el nodo
+  publica `/red_cone/status` y `/red_cone/goal_pose` en frame `map` usando la
+  imagen `/tb4_0/oakd/rgb/preview/image_raw`, `CameraInfo` y TF del TurtleBot4.
+- Agregado `tf_cache_time` al detector de Parte C para reproducir rosbags
+  lentos o pesados sin perder transformaciones entre camara y mapa.
+- Agregado `scripts/run_rosbag_cones_check.sh`, corrida reproducible que levanta
+  SLAM, detector y rosbag de conos, y guarda logs + mapa en una carpeta de
+  resultados.
+- Verificado localmente: `colcon build --symlink-install` OK; corrida lenta del
+  rosbag desde el inicio genero mapa `.pgm/.yaml/.png` y 1579 detecciones con
+  goal, con detecciones finales estables cerca de `(-1.21, 0.43)` en `map`.
 
 ### 2026-07-01 — Alan — Parte A / TB4 rosbag
 

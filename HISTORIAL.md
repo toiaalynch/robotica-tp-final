@@ -42,6 +42,24 @@ FastSLAM)** por ser la de menor complejidad conceptual.
 
 ## Historial
 
+### 2026-07-01 — Alan — Parte A / TB4 rosbag
+
+- Ajustado el perfil `tb4` del SLAM para trabajar directamente con el rosbag del
+  robot real: `/tb4_0/scan`, `/tb4_0/odom`, QoS `best_effort`, descarte de
+  intensidades `0.0`, rotacion del LIDAR `+90°` y offset `x=-0.04 m` segun la
+  matriz de la Parte 0.
+- Reducido el ruido de movimiento por defecto para `tb4` en SLAM. En las pruebas
+  con rosbag la odometria del TurtleBot4 ya venia estable; el ruido usado para
+  simulacion dispersaba demasiado las particulas y degradaba el mapa.
+- Aplicados los mismos defaults fisicos de LIDAR al MCL de Parte B para que la
+  localizacion con TurtleBot4 use la misma convencion que el SLAM.
+- Agregada configuracion `rviz_rosbag_laberinto.rviz` y guia
+  `COMANDOS_ROSBAG_TB4.md` para que el grupo pueda reproducir el rosbag y ver
+  `/map`, `/belief`, trayectorias y scan sin recordar todos los parametros.
+- Verificado localmente: `colcon build --symlink-install` OK; corrida headless
+  con rosbag `laberinto` guardo `mapa_laberinto_bag.pgm/.yaml` y genero un mapa
+  reconocible del laberinto.
+
 ### 2026-06-29 — Alan — Parte C
 
 - Agregado `red_cone_mission`, nodo de percepción que detecta conos rojos en

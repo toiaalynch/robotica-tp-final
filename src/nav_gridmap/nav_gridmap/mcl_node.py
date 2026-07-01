@@ -73,14 +73,18 @@ ROBOT_PROFILES = {
         "odom_frame": "odom",
         "odom_qos": "reliable",
         "lidar_angle_offset": 0.0,
+        "sensor_offset_x": 0.0,
+        "sensor_offset_y": 0.0,
         "discard_zero_intensity": False,
     },
     "tb4": {
         "scan_topic": "/tb4_0/scan",
-        "odom_topic": "/odom",
+        "odom_topic": "/tb4_0/odom",
         "odom_frame": "odom",
         "odom_qos": "best_effort",
-        "lidar_angle_offset": 0.0,
+        "lidar_angle_offset": math.pi / 2.0,
+        "sensor_offset_x": -0.04,
+        "sensor_offset_y": 0.0,
         "discard_zero_intensity": True,
     },
 }
@@ -118,8 +122,8 @@ class MclNode(Node):
         self.declare_parameter("max_range", 0.0)         # 0 -> range_max del scan
         self.declare_parameter("keyframe_dist", 0.10)    # m para disparar update
         self.declare_parameter("keyframe_angle", 0.10)   # rad para disparar update
-        self.declare_parameter("sensor_offset_x", 0.0)
-        self.declare_parameter("sensor_offset_y", 0.0)
+        self.declare_parameter("sensor_offset_x", prof["sensor_offset_x"])
+        self.declare_parameter("sensor_offset_y", prof["sensor_offset_y"])
         # frames y topicos (defaults del perfil)
         self.declare_parameter("map_frame", "map")
         self.declare_parameter("odom_frame", prof["odom_frame"])

@@ -1,0 +1,106 @@
+Panels:
+  - Class: rviz_common/Displays
+    Name: Displays
+    Property Tree Widget:
+      Expanded: true
+    Help Height: 78
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Class: rviz_default_plugins/Grid
+      Name: Grid
+      Enabled: true
+      Color: 160; 160; 164
+      Plane Cell Count: 40
+      Cell Size: 0.5
+      Reference Frame: <Fixed Frame>
+    - Class: rviz_default_plugins/TF
+      Name: TF
+      Enabled: true
+      Show Names: false
+      Show Axes: true
+      Marker Scale: 0.4
+    - Class: rviz_default_plugins/Map
+      Name: Map
+      Enabled: true
+      Topic:
+        Value: /map
+        Durability Policy: Transient Local
+        Reliability Policy: Reliable
+      Color Scheme: map
+      Alpha: 0.9
+      Draw Behind: false
+    - Class: rviz_default_plugins/LaserScan
+      Name: LaserScan TB4
+      Enabled: true
+      Topic:
+        Value: /tb4_0/scan
+        Reliability Policy: Best Effort
+        Durability Policy: Volatile
+      Size (m): 0.03
+      Style: Points
+      Color: 255; 255; 0
+      Color Transformer: FlatColor
+    - Class: rviz_default_plugins/Image
+      Name: Camera TB4
+      Enabled: true
+      Topic:
+        Value: /tb4_0/oakd/rgb/preview/image_raw
+        Reliability Policy: Best Effort
+        Durability Policy: Volatile
+      Normalize Range: true
+    - Class: rviz_default_plugins/PoseArray
+      Name: Particles
+      Enabled: true
+      Color: 255; 125; 0
+      Shape: Arrow (Flat)
+      Arrow Length: 0.12
+      Topic:
+        Value: /slam/particles
+        Reliability Policy: Reliable
+    - Class: rviz_default_plugins/Pose
+      Name: Belief
+      Enabled: true
+      Color: 0; 50; 255
+      Shape: Arrow
+      Topic:
+        Value: /belief
+        Reliability Policy: Reliable
+    - Class: rviz_default_plugins/Path
+      Name: PathSLAM
+      Enabled: true
+      Color: 25; 25; 220
+      Line Style: Lines
+      Topic:
+        Value: /slam/path
+        Reliability Policy: Reliable
+    - Class: rviz_default_plugins/Path
+      Name: PathOdom
+      Enabled: true
+      Color: 220; 30; 30
+      Line Style: Lines
+      Topic:
+        Value: /slam/odom_path
+        Reliability Policy: Reliable
+  Global Options:
+    Fixed Frame: map
+    Background Color: 48; 48; 48
+    Frame Rate: 30
+  Tools:
+    - Class: rviz_default_plugins/MoveCamera
+    - Class: rviz_default_plugins/Select
+    - Class: rviz_default_plugins/FocusCamera
+    - Class: rviz_default_plugins/Measure
+  Views:
+    Current:
+      Class: rviz_default_plugins/TopDownOrtho
+      Name: Current View
+      Scale: 25
+      Target Frame: map
+      X: 0
+      Y: 0
+Window Geometry:
+  Height: 850
+  Width: 1300
+  Displays:
+    collapsed: false

@@ -78,7 +78,10 @@ ROBOT_PROFILES = {
         "odom_topic": "/calc_odom",
         "gt_odom_topic": "/odom",        # ground truth disponible en Gazebo
         "odom_qos": "reliable",
+        "alpha": [0.02, 0.02, 0.02, 0.02],
         "lidar_angle_offset": 0.0,       # LIDAR alineado con el robot
+        "sensor_offset_x": 0.0,
+        "sensor_offset_y": 0.0,
         "discard_zero_intensity": False,
     },
     "tb4": {
@@ -86,7 +89,10 @@ ROBOT_PROFILES = {
         "odom_topic": "/tb4_0/odom",     # odom tambien va namespaceado (no /odom)
         "gt_odom_topic": "",             # robot real: no hay ground truth
         "odom_qos": "best_effort",
-        "lidar_angle_offset": 0.0,       # AJUSTAR con la rotacion real del LIDAR tb4
+        "alpha": [0.001, 0.001, 0.001, 0.001],
+        "lidar_angle_offset": math.pi / 2.0,  # matriz Parte 0: lidar rotado +90 deg
+        "sensor_offset_x": -0.04,        # matriz Parte 0: x=-4 cm respecto de base/shell
+        "sensor_offset_y": 0.0,
         "discard_zero_intensity": True,  # descartar lecturas de intensidad 0
     },
 }
@@ -107,7 +113,7 @@ class GridFastSlamNode(Node):
 
         # filtro
         self.declare_parameter("num_particles", 30)
-        self.declare_parameter("alpha", [0.02, 0.02, 0.02, 0.02])
+        self.declare_parameter("alpha", prof["alpha"])
         self.declare_parameter("neff_ratio", 0.5)
         self.declare_parameter("seed", 1)
         # likelihood field
@@ -128,8 +134,8 @@ class GridFastSlamNode(Node):
         self.declare_parameter("max_range", 0.0)         # 0 -> usar range_max del scan
         self.declare_parameter("keyframe_dist", 0.10)    # m para disparar update
         self.declare_parameter("keyframe_angle", 0.20)   # rad para disparar update
-        self.declare_parameter("sensor_offset_x", 0.0)   # LIDAR respecto de base
-        self.declare_parameter("sensor_offset_y", 0.0)
+        self.declare_parameter("sensor_offset_x", prof["sensor_offset_x"])   # LIDAR respecto de base
+        self.declare_parameter("sensor_offset_y", prof["sensor_offset_y"])
         # Actualizacion robusta del mapa: evita que giros puros borren paredes
         # ya vistas por rayos libres levemente desalineados.
         self.declare_parameter("hit_free_margin_m", 0.08)

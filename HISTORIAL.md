@@ -42,6 +42,16 @@ FastSLAM)** por ser la de menor complejidad conceptual.
 
 ## Historial
 
+### 2026-07-01 — Alan — Parte A / robot real
+
+- Actualizada `GUIA_ROBOT_REAL.md` con un paso a paso completo para correr
+  SLAM en el TurtleBot4 fisico: robot en `mode 0`, conexion, chequeos de
+  topicos, QoS, TF, suscriptores de `/tb4_0/odom` y verificacion de `/map`.
+- Cambiado el default crudo de `use_sim_time` en `params.yaml` a `false` para
+  que sea seguro si alguien lanza el nodo con `ros2 run` en el robot real. El
+  launch sigue pisando automaticamente este valor: `true` en tb3/Gazebo y
+  `false` en tb4 real.
+
 ### 2026-07-01 — Alan — Parte C / rosbag de conos
 
 - Validada la deteccion de cono rojo con el rosbag `laberinto_conos`: el nodo

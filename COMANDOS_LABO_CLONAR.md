@@ -51,6 +51,15 @@ Si aparecen esos paquetes, el repo quedo clonado y compilado correctamente.
 
 ## 8. Comandos utiles para la prueba
 
+Para la Parte A con el robot fisico, seguir primero la guia completa:
+
+```bash
+less GUIA_ROBOT_REAL.md
+```
+
+Esa guia incluye los chequeos de topicos, QoS, suscriptores de odometria y
+`use_sim_time=false`.
+
 SLAM con robot real:
 
 ```bash
@@ -95,4 +104,3 @@ ros2 launch nav_gridmap red_cone_mission.launch.py \
   auto_goal:=true \
   use_sim_time:=false
 ```
-
